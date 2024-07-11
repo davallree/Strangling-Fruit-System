@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ESP-NOW Web Serial</title>
+</head>
+<body>
+    <h1>ESP-NOW Web Serial</h1>
+    <button id="connect">Connect</button>
+    <button id="initializeAudio">Initialize Web Audio</button>
+    <div id="status"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="ambient.js"></script>
+    <script src="buttons.js"></script>
+    <script>
+        let port;
+        let reader;
+        let inputDone;
+        let inputStream;
+
+        document.getElementById('connect').addEventListener('click', async () => {
+            await connectSerial();
+        });
+
+        document.getElementById('initializeAudio').addEventListener('click', async () => {
+            await initializeWebAudio();
+        });
+
+        async function connectSerial() {
+            port = await navigator.serial.requestPort();
+            await port.open({ baudRate: 115200 });
+
+            const decoder = new TextDecoderStream();
+            inputDone = port.readable.pipeTo(decoder.writable);
+            inputStream = decoder.readable;
+            reader = inputStream.getReader();
+
+            readLoop();
+        }
+
+        async function initializeWebAudio() {
+            await Tone.start();
+            document.getElementById('status').innerText = "Web Audio Initialized";
+            initializeAmbientSound();
+            initializeButtonSounds();
+        }
+
+        async function readLoop() {
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) {
+                    console.log('[readLoop] DONE', done);
+                    reader.releaseLock();
+                    break;
+                }
+                if (value) {
+                    handleSerialData(value);
+                }
+            }
+        }
+
+        function handleSerialData(data) {
+            const lines = data.split('\n');
+            for (const line of lines) {
+                if (line.trim().length > 0) {
+                    console.log('Received:', line);
+                    document.getElementById('status').innerText = `Received: ${line}`;
+                    if (line.includes('1 button pressed')) {
+                        handleButtonPress(1);
+                    } else if (line.includes('2 buttons pressed')) {
+                        handleButtonPress(2);
+                    } else if (line.includes('0 buttons pressed')) {
+                        handleButtonPress(0);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
