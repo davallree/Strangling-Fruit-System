@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Tone.js Test</title>
+</head>
+<body>
+    <button id="startButton">Start Sound</button>
+    <div id="messages"></div>
+    <script src="Tone.js"></script> <!-- Local copy of Tone.js -->
+    <script>
+        document.getElementById('startButton').addEventListener('click', async () => {
+            try {
+                await Tone.start();
+                document.getElementById('startButton').style.display = 'none';
+                document.getElementById('messages').innerText = 'AudioContext is running';
+
+                if (Tone.context.state === 'running') {
+                    console.log('AudioContext is running');
+                } else {
+                    console.error('AudioContext is not running');
+                    document.getElementById('messages').innerText = 'AudioContext is not running';
+                    return;
+                }
+
+                const oscillator = new Tone.Oscillator("C4", "sine").toDestination();
+                oscillator.start();
+                setTimeout(() => {
+                    oscillator.stop();
+                    console.log('Oscillator stopped');
+                    document.getElementById('messages').innerText = 'Oscillator stopped';
+                }, 3000); // Play test tone for 3 seconds
+                console.log("Oscillator playing");
+                document.getElementById('messages').innerText = 'Oscillator playing';
+            } catch (error) {
+                console.error('Error starting Tone.js or playing sound:', error);
+                document.getElementById('messages').innerText = 'Error: ' + error.message;
+            }
+        });
+    </script>
+</body>
+</html>

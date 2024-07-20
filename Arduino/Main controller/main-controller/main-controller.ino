@@ -12,16 +12,20 @@ struct_message incomingMessage;
 // State tracking for each sender
 bool sender1Pressed = false;
 bool sender2Pressed = false;
+bool sender3Pressed = false;
+bool sender4Pressed = false;
 
-uint8_t sender1Address[] = {0x0C, 0x8B, 0x95, 0x93, 0x60, 0xF8}; // Replace with actual address
+uint8_t sender1Address[] = {0x0C, 0x8B, 0x95, 0x96, 0x41, 0xF4}; // Replace with actual address
 uint8_t sender2Address[] = {0x0C, 0x8B, 0x95, 0x96, 0xC6, 0xB4}; // Replace with actual address
+uint8_t sender3Address[] = {0x0C, 0x8B, 0x95, 0x93, 0x60, 0xF8}; // Replace with actual address
+uint8_t sender4Address[] = {0x0C, 0x8B, 0x95, 0x96, 0xC6, 0xB4}; // Replace with actual address
 
 // Callback function that will be executed when data is received
-void onDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
+void onDataRecv(const uint8_t* mac_addr, const uint8_t* incomingData, int len) {
     memcpy(&incomingMessage, incomingData, sizeof(incomingMessage));
 
     bool stateChanged = false;
-    if (memcmp(mac, sender1Address, 6) == 0) {
+    if (memcmp(mac_addr, sender1Address, 6) == 0) {
         if (strcmp(incomingMessage.message, "Pressed") == 0) {
             sender1Pressed = true;
             stateChanged = true;
@@ -29,7 +33,7 @@ void onDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
             sender1Pressed = false;
             stateChanged = true;
         }
-    } else if (memcmp(mac, sender2Address, 6) == 0) {
+    } else if (memcmp(mac_addr, sender2Address, 6) == 0) {
         if (strcmp(incomingMessage.message, "Pressed") == 0) {
             sender2Pressed = true;
             stateChanged = true;
@@ -37,12 +41,28 @@ void onDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len) {
             sender2Pressed = false;
             stateChanged = true;
         }
+    } else if (memcmp(mac_addr, sender3Address, 6) == 0) {
+        if (strcmp(incomingMessage.message, "Pressed") == 0) {
+            sender3Pressed = true;
+            stateChanged = true;
+        } else if (strcmp(incomingMessage.message, "Released") == 0) {
+            sender3Pressed = false;
+            stateChanged = true;
+        }
+    } else if (memcmp(mac_addr, sender4Address, 6) == 0) {
+        if (strcmp(incomingMessage.message, "Pressed") == 0) {
+            sender4Pressed = true;
+            stateChanged = true;
+        } else if (strcmp(incomingMessage.message, "Released") == 0) {
+            sender4Pressed = false;
+            stateChanged = true;
+        }
     }
 
     if (stateChanged) {
         sendState();
         Serial.print("State changed: ");
-        Serial.println(sender1Pressed + sender2Pressed);
+        Serial.println(sender1Pressed + sender2Pressed + sender3Pressed + sender4Pressed);
     }
 }
 
@@ -82,6 +102,8 @@ void setup() {
     // Add peers
     addPeer(sender1Address);
     addPeer(sender2Address);
+    addPeer(sender3Address);
+    addPeer(sender4Address);
 }
 
 void addPeer(uint8_t* address) {
@@ -98,13 +120,20 @@ void addPeer(uint8_t* address) {
 
 void sendState() {
     char stateMessage[32];
-    int pressedCount = sender1Pressed + sender2Pressed;
-    snprintf(stateMessage, sizeof(stateMessage), "%d button%s pressed", pressedCount, pressedCount == 1 ? "" : "s");
+    int pressedCount = sender1Pressed + sender2Pressed + sender3Pressed + sender4Pressed;
+
+    if (pressedCount > 0) {
+      snprintf(stateMessage, sizeof(stateMessage), "testtouch");
+    } else {
+      snprintf(stateMessage, sizeof(stateMessage), "%d button%s pressed", pressedCount, pressedCount == 1 ? "" : "s");
+    }
 
     strcpy(incomingMessage.message, stateMessage);
 
     esp_now_send(sender1Address, (uint8_t*)&incomingMessage, sizeof(incomingMessage));
-    esp_now_send(sender2Address, (uint8_t*)&incomingMessage, sizeof(incomingMessage));
+    // esp_now_send(sender2Address, (uint8_t*)&incomingMessage, sizeof(incomingMessage));
+    // esp_now_send(sender3Address, (uint8_t*)&incomingMessage, sizeof(incomingMessage));
+    // esp_now_send(sender4Address, (uint8_t*)&incomingMessage, sizeof(incomingMessage));
 
     // Also send over serial to the connected computer
     Serial.println(stateMessage);

@@ -1,30 +1,42 @@
-#include <WiFi.h>
-#include <esp_now.h>
-#include <esp_wifi.h>
-#include <FastLED.h>
+/*
+   FastLED Mapping Demo: https://github.com/jasoncoon/led-mapper
+   Copyright (C) 2022 Jason Coon, Evil Genius Labs LLC
 
-// Replace with your receiver's MAC address (the master)
-uint8_t receiverAddress[] = {0xE8, 0x9F, 0x6D, 0x1F, 0x84, 0x44};
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
-typedef struct struct_message {
-    char message[32];
-} struct_message;
+#include <FastLED.h> // https://github.com/FastLED/FastLED
 
-struct_message incomingMessage;
+FASTLED_USING_NAMESPACE
 
-// Capacitive touch pin and threshold
-const int touchPin = T0; // GPIO4
-const int touchThreshold = 22;
+// Based on FastLED "100-lines-of-code" demo reel, showing just a few
+// of the kinds of animation patterns you can quickly and easily
+// compose using FastLED.
+//
+// This example also shows one easy way to define multiple
+// animations patterns and have them automatically rotate.
+//
+// -Mark Kriegsman, December 2014
 
-// Variable to keep track of touch state
-bool touchDetected = false;
+#if defined(FASTLED_VERSION) && (FASTLED_VERSION < 3001000)
+#warning "Requires FastLED 3.1 or later; check github for latest code."
+#endif
 
-// Variable to keep track of pattern state
-bool isPatternPlaying = false;
+// change these to match your data pin, LED type, and color order
+#define DATA_PIN 5
+#define LED_TYPE WS2812
+#define COLOR_ORDER GBR
 
-// FastLED configuration
-#define LED_PIN     5
-// #define NUM_LEDS    60
+#define BRIGHTNESS 255
 
 // start of data copied from LED Mapper:
 
@@ -39,200 +51,285 @@ byte radii[NUM_LEDS] = { 255, 250, 245, 241, 236, 227, 222, 218, 214, 210, 202, 
 
 CRGB leds[NUM_LEDS];
 
+#define FRAMES_PER_SECOND 60
+#define ARRAY_SIZE(A) (sizeof(A) / sizeof((A)[0]))
+
+uint8_t offset = 0; // rotating "base color" used by many of the patterns
 uint8_t speed = 100;
 
-// Callback function that will be executed when data is received
-void onDataRecv(const uint8_t *mac_addr, const uint8_t *incomingData, int len) {
-    // Copy the incoming data into the incomingMessage structure
-    memcpy(&incomingMessage, incomingData, sizeof(incomingMessage));
-    Serial.print("Received message: ");
-    Serial.println(incomingMessage.message);
-    
-    // Handle the received message and execute appropriate actions
-    if (strcmp(incomingMessage.message, "0 buttons pressed") == 0) {
-        if (!isPatternPlaying) {
-            turnOffLEDs();
-        }
-    } else if (strcmp(incomingMessage.message, "1 button pressed") == 0) {
-        playSequence("ambient");
-    } else if (strcmp(incomingMessage.message, "2 buttons pressed") == 0) {
-        playSequence("glitch");
-    } else if (strcmp(incomingMessage.message, "3 buttons pressed") == 0) {
-        playSequence("glitch");
-    } else if (strcmp(incomingMessage.message, "4 buttons pressed") == 0) {
-        playSequence("sequence");
-    } else if (strcmp(incomingMessage.message, "testtouch") == 0) {
-        isPatternPlaying = true;
-        playTestTouch();
-    }
+boolean autoplay = true;
+uint8_t autoplaySeconds = 5;
+
+void setup()
+{
+  //  delay(3000); // 3 second delay for recovery
+
+  Serial.begin(9600);
+
+  // tell FastLED about the LED strip configuration
+  FastLED.addLeds<LED_TYPE, DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+  FastLED.setCorrection(TypicalSMD5050);
+
+  FastLED.setMaxPowerInVoltsAndMilliamps(5, 1000); // 1A
+
+  FastLED.setBrightness(BRIGHTNESS);
 }
 
+// List of patterns to cycle through.  Each is defined as a separate function below.
+typedef void (*SimplePatternList[])();
+SimplePatternList patterns = {
+    // 2D map examples:
+    clockwisePalette,
+    counterClockwisePalette,
+    outwardPalette,
+    inwardPalette,
+    northPalette,
+    northEastPalette,
+    eastPalette,
+    southEastPalette,
+    southPalette,
+    southWestPalette,
+    westPalette,
+    northWestPalette,
 
-// Callback function that will be executed when data is sent
-void onSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
-    Serial.print("\r\nLast Packet Send Status:\t");
-    Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success" : "Delivery Fail");
+    // standard FastLED demo reel examples:
+    //  rainbow,
+    //  rainbowWithGlitter,
+    //  confetti,
+    //  sinelon,
+    //  juggle,
+    //  bpm
+};
+
+const uint8_t patternCount = ARRAY_SIZE(patterns);
+
+uint8_t currentPatternIndex = 0; // Index number of which pattern is current
+
+CRGBPalette16 IceColors_p = CRGBPalette16(CRGB::Black, CRGB::Blue, CRGB::Aqua, CRGB::White);
+
+const CRGBPalette16 palettes[] = {
+    RainbowColors_p,
+    RainbowStripeColors_p,
+    CloudColors_p,
+    LavaColors_p,
+    OceanColors_p,
+    ForestColors_p,
+    PartyColors_p,
+    HeatColors_p,
+    IceColors_p,
+};
+
+const uint8_t paletteCount = ARRAY_SIZE(palettes);
+
+uint8_t currentPaletteIndex = 0;
+CRGBPalette16 currentPalette = palettes[currentPaletteIndex];
+
+boolean autoplayPalettes = true;
+uint8_t autoplayPaletteSeconds = autoplaySeconds * patternCount;
+
+void loop()
+{
+  // Call the current pattern function once, updating the 'leds' array
+  patterns[currentPatternIndex]();
+
+  offset = beat8(speed);
+
+  // do some periodic updates
+  EVERY_N_SECONDS(autoplaySeconds)
+  {
+    if (autoplay)
+    {
+      nextPattern(); // change patterns periodically
+    }
+  }
+
+  EVERY_N_SECONDS(autoplayPaletteSeconds)
+  {
+    // change palettes periodically
+    if (autoplayPalettes)
+    {
+      nextPalette();
+    }
+  }
+
+  // send the 'leds' array out to the actual LED strip
+  // FastLED.show(); called automatically, internally by FastLED.delay below:
+
+  // insert a delay to keep the framerate modest
+  FastLED.delay(1000 / FRAMES_PER_SECOND);
 }
 
-// Function to print the MAC address
-void printMACAddress() {
-    uint8_t mac[6];
-    WiFi.macAddress(mac);
-    Serial.print("MAC Address: ");
-    for (int i = 0; i < 6; i++) {
-        Serial.printf("%02X", mac[i]);
-        if (i < 5) Serial.print(":");
-    }
-    Serial.println();
+void nextPattern()
+{
+  // add one to the current pattern number, and wrap around at the end
+  currentPatternIndex = (currentPatternIndex + 1) % patternCount;
 }
 
-void setup() {
-    Serial.begin(115200);
-    WiFi.mode(WIFI_STA);
-    WiFi.disconnect();
-    delay(100);
-
-    // Print the MAC address of the sender
-    printMACAddress();
-
-    // Initialize ESP-NOW
-    if (esp_now_init() != ESP_OK) {
-        Serial.println("Error initializing ESP-NOW");
-        return;
-    }
-
-    // Register send callback function
-    esp_now_register_send_cb(onSent);
-    
-    // Register receive callback function
-    esp_now_register_recv_cb(onDataRecv);
-
-    // Set up peer information
-    esp_now_peer_info_t peerInfo;
-    memset(&peerInfo, 0, sizeof(peerInfo));
-    memcpy(peerInfo.peer_addr, receiverAddress, 6);
-    peerInfo.channel = 0;  // Channel 0 means the same channel as the Wi-Fi
-    peerInfo.encrypt = false;
-
-    // Add peer
-    if (esp_now_add_peer(&peerInfo) != ESP_OK) {
-        Serial.println("Failed to add peer");
-        return;
-    }
-
-    // Initialize FastLED
-    FastLED.addLeds<WS2811, LED_PIN, GRB>(leds, NUM_LEDS).setCorrection(TypicalLEDStrip);
-    FastLED.clear();
-    FastLED.show();
+void nextPalette()
+{
+  // add one to the current palette number, and wrap around at the end
+  currentPaletteIndex = (currentPaletteIndex + 1) % paletteCount;
+  currentPalette = palettes[currentPaletteIndex];
 }
 
-void loop() {
-    // Read touch sensor value
-    int touchValue = touchRead(touchPin);
+// 2D map examples:
 
-    // Print the touch value for debugging
-    Serial.print("Touch Value: ");
-    Serial.println(touchValue);
-
-    // Check if touch value is below the threshold
-    if (touchValue < touchThreshold) {
-        if (!touchDetected && !isPatternPlaying) {
-            Serial.println("Touch detected!");
-            touchDetected = true;  // Set the state to indicate touch is detected
-            sendMessage("Pressed"); // Send message
-            turnOnLEDs();           // Turn on LEDs
-        }
-    } else {
-        if (touchDetected && !isPatternPlaying) {
-            touchDetected = false; // Reset the state when no touch is detected
-            sendMessage("Released"); // Send message
-            turnOffLEDs();           // Turn off LEDs
-        }
-    }
-
-    // Small delay to avoid flooding the serial output
-    delay(100);
+void clockwisePalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset + angles[i]);
+  }
 }
 
-
-// Function to send a message to the master
-void sendMessage(const char* message) {
-    digitalWrite(LED_BUILTIN, HIGH); // Turn on LED
-    delay(100); // Keep the LED on for 100 milliseconds for visibility
-
-    strcpy(incomingMessage.message, message);
-    esp_err_t result = esp_now_send(receiverAddress, (uint8_t *) &incomingMessage, sizeof(incomingMessage));
-
-    if (result == ESP_OK) {
-        Serial.println("Message sent successfully");
-    } else {
-        Serial.println("Error sending the message");
-    }
-
-    digitalWrite(LED_BUILTIN, LOW); // Turn off LED
+void counterClockwisePalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset - angles[i]);
+  }
 }
 
-// Function to turn on the LEDs
-void turnOnLEDs() {
-    for (int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = CRGB::Red; // Set the color to red (you can choose any color)
-    }
-    FastLED.show();
+void outwardPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset - radii[i]);
+  }
 }
 
-void turnOnLEDsWhite() {
-    for (int i = 0; i < NUM_LEDS; i++) {
-        leds[i] = CRGB::White;
-    }
-    FastLED.show();
+void inwardPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset + radii[i]);
+  }
 }
 
-// Function to turn off the LEDs
-void turnOffLEDs() {
-    FastLED.clear();
-    FastLED.show();
+void northPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset - coordsY[i]);
+  }
 }
 
-// Function to play a specific pattern based on the received message
-void playSequence(const char* sequence) {
-    Serial.print("Playing sequence: ");
-    Serial.println(sequence);
-    if (strcmp(sequence, "ambient") == 0) {
-        // Code to play ambient sequence
-    } else if (strcmp(sequence, "glitch") == 0) {
-        // Code to play glitch sequence
-    } else if (strcmp(sequence, "testtouch") == 0) {
-        // Code to play sequence of sequence
-        playTestTouch();
-    }
+void northEastPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset - (coordsX[i] + coordsY[i]));
+  }
 }
 
-void playTestTouch() {
-    isPatternPlaying = true; // Set the flag to indicate the pattern is playing
-
-    // First, play ALL ON for 2s
-    turnOnLEDsWhite();
-    delay(2 * 1000);
-
-    // Then, play rainbow rotator for 20s
-    unsigned long startTime = millis();
-    while (millis() - startTime < 20 * 1000) {
-        outwardPalette();
-        delay(50); // Adjust the delay to control the animation speed
-    }
-
-    // Then turn off
-    turnOffLEDs();
-
-    isPatternPlaying = false; // Clear the flag to indicate the pattern has finished
+void eastPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset - coordsX[i]);
+  }
 }
 
+void southEastPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset - coordsX[i] + coordsY[i]);
+  }
+}
 
+void southPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset + coordsY[i]);
+  }
+}
 
-void outwardPalette() {
-    uint8_t offset = beat8(speed); // Declare offset here
-    for (uint16_t i = 0; i < NUM_LEDS; i++) {
-        leds[i] = ColorFromPalette(RainbowColors_p, offset - radii[i]);
-    }
-    FastLED.show(); // Make sure to call FastLED.show() to update the LEDs
+void southWestPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset + coordsX[i] + coordsY[i]);
+  }
+}
+
+void westPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset + coordsX[i]);
+  }
+}
+
+void northWestPalette()
+{
+  for (uint16_t i = 0; i < NUM_LEDS; i++)
+  {
+    leds[i] = ColorFromPalette(currentPalette, offset + coordsX[i] - coordsY[i]);
+  }
+}
+
+// standard FastLED demo reel examples:
+
+void rainbow()
+{
+  // FastLED's built-in rainbow generator
+  fill_rainbow(leds, NUM_LEDS, offset, 7);
+}
+
+void rainbowWithGlitter()
+{
+  // built-in FastLED rainbow, plus some random sparkly glitter
+  rainbow();
+  addGlitter(80);
+}
+
+void addGlitter(fract8 chanceOfGlitter)
+{
+  if (random8() < chanceOfGlitter)
+  {
+    leds[random16(NUM_LEDS)] += CRGB::White;
+  }
+}
+
+void confetti()
+{
+  // random colored speckles that blink in and fade smoothly
+  fadeToBlackBy(leds, NUM_LEDS, 10);
+  int pos = random16(NUM_LEDS);
+  leds[pos] += CHSV(offset + random8(64), 200, 255);
+}
+
+void sinelon()
+{
+  // a colored dot sweeping back and forth, with fading trails
+  fadeToBlackBy(leds, NUM_LEDS, 20);
+  int pos = beatsin16(13, 0, NUM_LEDS - 1);
+  leds[pos] += CHSV(offset, 255, 192);
+}
+
+void bpm()
+{
+  // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
+  uint8_t BeatsPerMinute = 62;
+  CRGBPalette16 palette = PartyColors_p;
+  uint8_t beat = beatsin8(BeatsPerMinute, 64, 255);
+  for (int i = 0; i < NUM_LEDS; i++)
+  { // 9948
+    leds[i] = ColorFromPalette(palette, offset + (i * 2), beat - offset + (i * 10));
+  }
+}
+
+const byte dotCount = 3;
+const byte hues = 240 / dotCount;
+
+void juggle()
+{
+  // eight colored dots, weaving in and out of sync with each other
+  fadeToBlackBy(leds, NUM_LEDS, 20);
+  for (int i = 0; i < dotCount; i++)
+  {
+    leds[beatsin16(i + 7, 0, NUM_LEDS - 1)] |= CHSV(i * hues, 200, 255);
+  }
 }
