@@ -1,0 +1,8 @@
+{
+  "name": "StranglingFruitCommon",
+  "version": "1.0.0",
+  "description": "Common code for Strangling Fruit",
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": "*"
+}
