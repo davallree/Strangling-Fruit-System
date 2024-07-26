@@ -9,21 +9,27 @@
 #include <WiFi.h>
 #include <esp_now.h>
 
+#include <vector>
+
 #include "common/common.h"
 #include "common/messages.h"
+#include "wall/animation.h"
 
 // The MAC address of the master controller. Set once the master sends a
 // message.
 MacAddress master_address;
 
 // Whether the hand is currently pressed or not.
+constexpr uint8_t kHandPin = BUTTON;
 bool hand_pressed = false;
 
 // The current wall animation.
 WallAnimation current_animation = WallAnimation::kAmbient;
 
 // This emulates the LED wall.
-CRGB led;
+std::vector<CRGB> leds;
+
+std::vector<CRGB> InitLeds() { return {CRGB::Black}; }
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   // Debug outgoing data.
@@ -79,7 +85,7 @@ void SendHandEvent(const HandEvent &event) {
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
-  pinMode(BUTTON, INPUT);
+  pinMode(kHandPin, INPUT);
   // Wall always has the LED turned off.
   digitalWrite(LED_BUILTIN, LOW);
 
@@ -91,62 +97,23 @@ void setup() {
   esp_now_register_recv_cb(&OnDataReceived);
 
   // Initialize FastLED.
-  FastLED.addLeds<NEOPIXEL, PIN_NEOPIXEL>(&led, 1);
+  leds = InitLeds();
+  FastLED.addLeds<NEOPIXEL, PIN_NEOPIXEL>(leds.data(), leds.size());
   FastLED.setBrightness(10);
-}
-
-void rainbow() {
-  // FastLED's built-in rainbow generator
-  fill_rainbow(&led, 1, 0, 7);
-}
-
-void bpm() {
-  // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
-  uint8_t BeatsPerMinute = 62;
-  CRGBPalette16 palette = PartyColors_p;
-  uint8_t beat = beatsin8(BeatsPerMinute, 64, 255);
-  led = ColorFromPalette(palette, 0, beat);
-}
-
-// List of patterns to cycle through during ambient state.  Each is defined as a
-// separate function below.
-typedef void (*AmbientPattern)();
-std::array<AmbientPattern, 2> ambient_patterns = {rainbow, bpm};
-// Index number of which pattern is current.
-uint8_t current_pattern = 0;
-
-// The ambient animation cycles through a set of patterns.
-void ambient_animation() {
-  // Call the current pattern's function.
-  ambient_patterns[current_pattern]();
-
-  // Go to next pattern every N seconds.
-  EVERY_N_SECONDS(5) {
-    current_pattern = (current_pattern + 1) % ambient_patterns.size();
-  }
-}
-
-void touched_animation() {
-  uint8_t beat = beatsin8(200, 0);
-  led.setHSV(0, 0, beat);
-}
-
-void glitch_animation() {
-  EVERY_N_MILLIS(500) { led.setRGB(random8(), random8(), random8()); }
 }
 
 void animate() {
   switch (current_animation) {
     case WallAnimation::kAmbient: {
-      ambient_animation();
+      ambient_animation(leds);
       break;
     }
     case WallAnimation::kTouched: {
-      touched_animation();
+      touched_animation(leds);
       break;
     }
     case WallAnimation::kGlitch: {
-      glitch_animation();
+      glitch_animation(leds);
       break;
     }
   }
@@ -158,7 +125,7 @@ void loop() {
     Serial.printf("Current animation: %d\n", current_animation);
   }
   animate();
-  if (digitalRead(BUTTON) == LOW) {
+  if (digitalRead(kHandPin) == LOW) {
     if (!hand_pressed) {
       Serial.println("Button pressed!");
       SendHandEvent(HandEvent{.type = HandEventType::kPressed});

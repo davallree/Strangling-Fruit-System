@@ -1,7 +1,5 @@
-#ifndef NEW_ZORG_COMMON_MESSAGES_H_
-#define NEW_ZORG_COMMON_MESSAGES_H_
-#ifndef INCLUDE_MESSAGES_H_
-#define INCLUDE_MESSAGES_H_
+#ifndef INCLUDE_COMMON_MESSAGES_H_
+#define INCLUDE_COMMON_MESSAGES_H_
 
 #include <cstdint>
 
@@ -29,7 +27,4 @@ struct MasterCommand {
   WallAnimation animation_to_play;
 };
 
-#endif  // INCLUDE_MESSAGES_H_
-
-
-#endif // NEW_ZORG_COMMON_MESSAGES_H_
+#endif  // INCLUDE_COMMON_MESSAGES_H_
