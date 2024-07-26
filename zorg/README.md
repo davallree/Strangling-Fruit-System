@@ -17,8 +17,16 @@ https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide
 ### CLI
 
 ```
-$ cd zorg/master
-$ pio run
+$ cd zorg
+$ pio run -e main -t upload  # uploads the main program
+$ pio run -e wall -t upload  # uploads the wall program
+```
+
+If multiple boards are plugged in:
+
+```
+$ pio device list  # lists devices
+$ pio run -e -main -t upload --upload-port <port from device list>
 ```
 
 ### VSCode
@@ -35,6 +43,6 @@ https://docs.platformio.org/en/latest/integration/ide/vscode.html#ide-vscode.
 
 ## Fixing squiggly lines in `common` in VSCode
 
-Copy either `Strangling-Fruit-System/zorg/master/.vscode/c_cpp_properties.json`
-or `Strangling-Fruit-System/zorg/wall/.vscode/c_cpp_properties.json` into
-`Strangling-Fruit-System/zorg/common/.vscode/c_cpp_properties.json`.
+Use the environment switcher in the status bar to switch to either the `main` or
+`wall` environment. This will update VSCode's IntelliSense based on that
+environment's projects
