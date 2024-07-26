@@ -21,6 +21,7 @@ enum class WallAnimation : uint8_t {
   kAmbient,
   kTouched,
   kGlitch,
+  kClimax,
 };
 
 struct MasterCommand {

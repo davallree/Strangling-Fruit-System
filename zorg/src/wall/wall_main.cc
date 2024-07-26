@@ -27,9 +27,7 @@ bool hand_pressed = false;
 WallAnimation current_animation = WallAnimation::kAmbient;
 
 // This emulates the LED wall.
-std::vector<CRGB> leds;
-
-std::vector<CRGB> InitLeds() { return {CRGB::Black}; }
+std::vector<CRGB> leds = std::vector<CRGB>(16 * 16);
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   // Debug outgoing data.
@@ -97,8 +95,7 @@ void setup() {
   esp_now_register_recv_cb(&OnDataReceived);
 
   // Initialize FastLED.
-  leds = InitLeds();
-  FastLED.addLeds<NEOPIXEL, PIN_NEOPIXEL>(leds.data(), leds.size());
+  FastLED.addLeds<NEOPIXEL, 5>(leds.data(), leds.size());
   FastLED.setBrightness(10);
 }
 
@@ -114,6 +111,10 @@ void animate() {
     }
     case WallAnimation::kGlitch: {
       glitch_animation(leds);
+      break;
+    }
+    case WallAnimation::kClimax: {
+      climax_animation(leds);
       break;
     }
   }

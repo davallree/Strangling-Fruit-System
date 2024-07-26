@@ -50,3 +50,8 @@ void glitch_animation(std::vector<CRGB>& leds) {
     }
   }
 }
+
+void climax_animation(std::vector<CRGB>& leds) {
+  fill_rainbow(leds.data(), leds.size(), beat8(160));
+  fade_video(leds.data(), leds.size(), beat8(60));
+}

@@ -16,4 +16,6 @@ void touched_animation(std::vector<CRGB>& leds);
 
 void glitch_animation(std::vector<CRGB>& leds);
 
+void climax_animation(std::vector<CRGB>& leds);
+
 #endif  // INCLUDE_WALL_ANIMATION_H_
