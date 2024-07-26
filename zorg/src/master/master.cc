@@ -4,10 +4,13 @@
 #include <esp_now.h>
 
 #include <array>
+#include <optional>
 #include <vector>
 
 #include "common/common.h"
 #include "common/messages.h"
+
+constexpr uint64_t kGlitchDurationMillis = 10000;
 
 enum class WallState : uint8_t {
   kUnpressed,
@@ -16,9 +19,6 @@ enum class WallState : uint8_t {
 };
 class Wall {
  public:
-  static const uint64_t kGlitchTimeoutMillis = 5000;
-  static const uint64_t kGlitchDurationMillis = 10000;
-
   explicit Wall(MacAddress address) : address_(std::move(address)) {}
 
   void SendCommand(const MasterCommand& command) const {
@@ -78,14 +78,14 @@ class Wall {
   }
 
   void Update() {
-    // Check for glitch.
-    if (state_ == WallState::kPressed) {
-      uint64_t pressed_duration_millis = millis() - pressed_start_millis_;
-      if (pressed_duration_millis > kGlitchTimeoutMillis) {
-        Serial.println("timed out, entering glitch.");
-        SetState(WallState::kGlitched);
-      }
-    }
+    // // Check for glitch.
+    // if (state_ == WallState::kPressed) {
+    //   uint64_t pressed_duration_millis = millis() - pressed_start_millis_;
+    //   if (pressed_duration_millis > kGlitchTimeoutMillis) {
+    //     Serial.println("timed out, entering glitch.");
+    //     SetState(WallState::kGlitched);
+    //   }
+    // }
     if (state_ == WallState::kGlitched) {
       // Check if we need to exit glitched state.
       if (millis() > glitched_end_millis_) {
@@ -106,7 +106,9 @@ class Wall {
   uint64_t glitched_end_millis_;
 };
 
-std::vector<Wall> walls;
+std::vector<Wall> walls = {Wall({0xE8, 0x9F, 0x6D, 0x1F, 0x84, 0x44}),
+                           Wall({0x0C, 0x8B, 0x95, 0x93, 0x60, 0xF8})};
+
 int GetWallIndex(MacAddress address) {
   for (int i = 0; i < walls.size(); i++) {
     if (walls[i].address() == address) return i;
@@ -162,8 +164,6 @@ void setup() {
   esp_now_register_send_cb(&OnDataSent);
   esp_now_register_recv_cb(&OnDataReceived);
 
-  walls.push_back(Wall({0xE8, 0x9F, 0x6D, 0x1F, 0x84, 0x44}));
-
   for (Wall& wall : walls) {
     AddPeer(wall.address());
     wall.SendCommand(
@@ -171,9 +171,36 @@ void setup() {
   }
 }
 
+// Returns
+std::optional<uint64_t> LatestPressedTime(const std::vector<Wall>& walls) {
+  std::optional<uint64_t> latest_pressed_time;
+  for (const Wall& wall : walls) {
+    if (wall.state() == WallState::kPressed) {
+      if (!latest_pressed_time.has_value() ||
+          *latest_pressed_time < wall.pressed_start_millis()) {
+        latest_pressed_time = wall.pressed_start_millis();
+      }
+    }
+  }
+  return latest_pressed_time;
+}
+
+constexpr uint64_t kGlitchTimeoutMillis = 5000;
+
 void loop() {
-  // Check walls for glitch.
   for (Wall& wall : walls) {
     wall.Update();
+  }
+  // Check walls for glitch.
+  // Check if any wall is currently pressed.
+  std::optional<uint64_t> latest_wall_press_time = LatestPressedTime(walls);
+  if (latest_wall_press_time.has_value()) {
+    uint64_t pressed_duration_millis = millis() - *latest_wall_press_time;
+    if (pressed_duration_millis > kGlitchTimeoutMillis) {
+      Serial.println("timed out, entering glitch.");
+      for (Wall& wall : walls) {
+        wall.SetState(WallState::kGlitched);
+      }
+    }
   }
 }
