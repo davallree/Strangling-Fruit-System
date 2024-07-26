@@ -1,3 +1,5 @@
+#ifndef NEW_ZORG_COMMON_ANIMATION_H_
+#define NEW_ZORG_COMMON_ANIMATION_H_
 #ifndef INCLUDE_ANIMATION_H_
 #define INCLUDE_ANIMATION_H_
 
@@ -17,3 +19,6 @@ class Animator {
 };
 
 #endif // INCLUDE_ANIMATION_H_
+
+
+#endif // NEW_ZORG_COMMON_ANIMATION_H_

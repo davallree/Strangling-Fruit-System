@@ -7,9 +7,10 @@
 #include <Arduino.h>
 #include <FastLED.h>
 #include <WiFi.h>
-#include <common.h>
 #include <esp_now.h>
-#include <messages.h>
+
+#include "common/common.h"
+#include "common/messages.h"
 
 // The MAC address of the master controller. Set once the master sends a
 // message.

@@ -1,5 +1,5 @@
-#ifndef INCLUDE_COMMON_H_
-#define INCLUDE_COMMON_H_
+#ifndef INCLUDE_COMMON_COMMON_H_
+#define INCLUDE_COMMON_COMMON_H_
 
 #include <algorithm>
 #include <array>
@@ -22,4 +22,4 @@ void InitEspNow();
 // Add a peer with the given MAC address.
 void AddPeer(const MacAddress& mac_addr);
 
-#endif  // INCLUDE_COMMON_H_
+#endif // INCLUDE_COMMON_COMMON_H_

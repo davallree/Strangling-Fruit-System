@@ -1,12 +1,13 @@
 // Master controller.
 #include <Arduino.h>
 #include <WiFi.h>
-#include <common.h>
 #include <esp_now.h>
-#include <messages.h>
 
 #include <array>
 #include <vector>
+
+#include "common/common.h"
+#include "common/messages.h"
 
 enum class WallState : uint8_t {
   kUnpressed,

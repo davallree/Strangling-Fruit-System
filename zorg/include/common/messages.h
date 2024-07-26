@@ -1,3 +1,5 @@
+#ifndef NEW_ZORG_COMMON_MESSAGES_H_
+#define NEW_ZORG_COMMON_MESSAGES_H_
 #ifndef INCLUDE_MESSAGES_H_
 #define INCLUDE_MESSAGES_H_
 
@@ -28,3 +30,6 @@ struct MasterCommand {
 };
 
 #endif  // INCLUDE_MESSAGES_H_
+
+
+#endif // NEW_ZORG_COMMON_MESSAGES_H_
