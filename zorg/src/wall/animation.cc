@@ -2,7 +2,49 @@
 
 #include <pixeltypes.h>
 
+#include <cmath>
 #include <vector>
+
+void LEDController::InitLEDs(int num_leds, const uint8_t* coordsX,
+                             const uint8_t* coordsY, const uint8_t* angles,
+                             const uint8_t* radii) {
+  InitLedBuffer(num_leds);
+  leds_.reserve(led_buffer_.size());
+  for (int i = 0; i < led_buffer_.size(); ++i) {
+    leds_.push_back(
+        LED(led_buffer_[i], coordsX[i], coordsY[i], angles[i], radii[i]));
+  }
+}
+
+template <typename T>
+uint8_t map_to_256(T l, T inMin, T inMax) {
+  uint8_t outMin = 0;
+  uint8_t outMax = 255;
+  if (inMax - inMin + outMin == 0) return 0;
+
+  return ((l - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
+}
+
+void LEDController::InitLEDs(int sizeX, int sizeY) {
+  InitLedBuffer(sizeX * sizeY);
+  float centerX = sizeX / 2;
+  float centerY = sizeY / 2;
+  leds_.reserve(led_buffer_.size());
+
+  float max_radius = std::max(centerX, centerY);
+  for (int y = 0; y < sizeY; ++y) {
+    for (int x = 0; x < sizeX; ++x) {
+      uint8_t x256 = map_to_256(x, 0, sizeX);
+      uint8_t y256 = map_to_256(y, 0, sizeY);
+      float angle = atan2(centerY - y, centerX - x);
+      uint8_t angle256 = map_to_256(angle, 0.f, (float)(2 * PI));
+      float radius = hypot(x - centerX, y - centerY);
+      uint8_t radius256 = map_to_256(radius, 0.f, max_radius);
+      leds_.push_back(
+          LED(led_buffer_[(y * sizeY) + x], x256, y256, angle256, radius256));
+    }
+  }
+}
 
 void rainbow(std::vector<CRGB>& leds) {
   fill_rainbow(leds.data(), leds.size(), beat8(33));

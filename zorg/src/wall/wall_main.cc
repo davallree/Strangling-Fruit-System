@@ -81,6 +81,8 @@ void SendHandEvent(const HandEvent &event) {
   }
 }
 
+LEDController controller;
+
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(kHandPin, INPUT);
@@ -95,8 +97,15 @@ void setup() {
   esp_now_register_recv_cb(&OnDataReceived);
 
   // Initialize FastLED.
-  FastLED.addLeds<NEOPIXEL, 5>(leds.data(), leds.size());
+  controller.InitLEDs(16, 16);
+  FastLED.addLeds<NEOPIXEL, 5>(controller.led_buffer().data(),
+                               controller.led_buffer().size());
   FastLED.setBrightness(10);
+
+  for (LED &led : controller.leds()) {
+    Serial.printf("{x: %d, y: %d, angle: %d, radius: %d}\n", led.x(), led.y(),
+                  led.angle(), led.radius());
+  }
 }
 
 void animate() {
@@ -122,21 +131,26 @@ void animate() {
 }
 
 void loop() {
-  EVERY_N_SECONDS(1) {
-    Serial.printf("Current animation: %d\n", current_animation);
+  uint8_t offset = beat8(33);
+  for (LED &led : controller.leds()) {
+    led.color() = ColorFromPalette(RainbowColors_p, offset - led.y());
   }
-  animate();
-  if (digitalRead(kHandPin) == LOW) {
-    if (!hand_pressed) {
-      Serial.println("Button pressed!");
-      SendHandEvent(HandEvent{.type = HandEventType::kPressed});
-      hand_pressed = true;
-    }
-  } else {
-    if (hand_pressed) {
-      Serial.println("Button released!");
-      SendHandEvent(HandEvent{.type = HandEventType::kReleased});
-      hand_pressed = false;
-    }
-  }
+  FastLED.show();
+  // EVERY_N_SECONDS(1) {
+  //   Serial.printf("Current animation: %d\n", current_animation);
+  // }
+  // animate();
+  // if (digitalRead(kHandPin) == LOW) {
+  //   if (!hand_pressed) {
+  //     Serial.println("Button pressed!");
+  //     SendHandEvent(HandEvent{.type = HandEventType::kPressed});
+  //     hand_pressed = true;
+  //   }
+  // } else {
+  //   if (hand_pressed) {
+  //     Serial.println("Button released!");
+  //     SendHandEvent(HandEvent{.type = HandEventType::kReleased});
+  //     hand_pressed = false;
+  //   }
+  // }
 }
