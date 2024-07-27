@@ -26,8 +26,7 @@ bool hand_pressed = false;
 // The current wall animation.
 WallAnimation current_animation = WallAnimation::kAmbient;
 
-// This emulates the LED wall.
-std::vector<CRGB> leds = std::vector<CRGB>(16 * 16);
+LEDController controller;
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   // Debug outgoing data.
@@ -81,8 +80,6 @@ void SendHandEvent(const HandEvent &event) {
   }
 }
 
-LEDController controller;
-
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(kHandPin, INPUT);
@@ -111,19 +108,19 @@ void setup() {
 void animate() {
   switch (current_animation) {
     case WallAnimation::kAmbient: {
-      ambient_animation(leds);
+      ambient_animation(controller.led_buffer());
       break;
     }
     case WallAnimation::kTouched: {
-      touched_animation(leds);
+      touched_animation(controller.led_buffer());
       break;
     }
     case WallAnimation::kGlitch: {
-      glitch_animation(leds);
+      glitch_animation(controller.led_buffer());
       break;
     }
     case WallAnimation::kClimax: {
-      climax_animation(leds);
+      climax_animation(controller.led_buffer());
       break;
     }
   }
@@ -131,26 +128,21 @@ void animate() {
 }
 
 void loop() {
-  uint8_t offset = beat8(33);
-  for (LED &led : controller.leds()) {
-    led.color() = ColorFromPalette(RainbowColors_p, offset - led.y());
+  EVERY_N_SECONDS(1) {
+    Serial.printf("Current animation: %d\n", current_animation);
   }
-  FastLED.show();
-  // EVERY_N_SECONDS(1) {
-  //   Serial.printf("Current animation: %d\n", current_animation);
-  // }
-  // animate();
-  // if (digitalRead(kHandPin) == LOW) {
-  //   if (!hand_pressed) {
-  //     Serial.println("Button pressed!");
-  //     SendHandEvent(HandEvent{.type = HandEventType::kPressed});
-  //     hand_pressed = true;
-  //   }
-  // } else {
-  //   if (hand_pressed) {
-  //     Serial.println("Button released!");
-  //     SendHandEvent(HandEvent{.type = HandEventType::kReleased});
-  //     hand_pressed = false;
-  //   }
-  // }
+  animate();
+  if (digitalRead(kHandPin) == LOW) {
+    if (!hand_pressed) {
+      Serial.println("Button pressed!");
+      SendHandEvent(HandEvent{.type = HandEventType::kPressed});
+      hand_pressed = true;
+    }
+  } else {
+    if (hand_pressed) {
+      Serial.println("Button released!");
+      SendHandEvent(HandEvent{.type = HandEventType::kReleased});
+      hand_pressed = false;
+    }
+  }
 }
