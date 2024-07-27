@@ -50,7 +50,7 @@ class Wall {
   // Send a command to the wall MCU.
   void SendCommand(const MasterCommand& command) const;
 
-  void UpdateWallAnimation();
+  WallAnimation GetWallAnimation();
 
   // MAC address of the wall being controlled.
   MacAddress address_;

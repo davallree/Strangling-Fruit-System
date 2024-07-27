@@ -56,28 +56,27 @@ void Wall::SetState(WallState state) {
   dirty_ = true;
 }
 
-void Wall::UpdateWallAnimation() {
-  MasterCommand command;
+WallAnimation Wall::GetWallAnimation() {
   switch (state_) {
     case WallState::kUnpressed:
-      command.animation_to_play = WallAnimation::kAmbient;
-      break;
-    case WallState::kPressed: {
-      command.animation_to_play = WallAnimation::kTouched;
-      break;
-    }
-    case WallState::kGlitched: {
-      command.animation_to_play = WallAnimation::kGlitch;
-      break;
-    }
+      return WallAnimation::kAmbient;
+    case WallState::kPressed:
+      return WallAnimation::kTouched;
+    case WallState::kGlitched:
+      return WallAnimation::kGlitch;
+    case WallState::kClimax:
+      return WallAnimation::kClimax;
   }
-  SendCommand(command);
+  // Fall through to idle.
+  return WallAnimation::kAmbient;
 }
 
 void Wall::Update() {
   if (dirty_) {
     Serial.println("Wall dirty, updating.");
-    UpdateWallAnimation();
+    MasterCommand command;
+    command.animation_to_play = GetWallAnimation();
+    SendCommand(command);
     dirty_ = false;
   }
   // TODO: add a low-frenquency call to SendCommand, in case a message got

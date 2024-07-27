@@ -6,17 +6,23 @@
 
 #include "master/wall.h"
 
-constexpr uint64_t kGlitchDurationMillis = 10000;
-
 enum class CubeState : uint8_t {
   kDefault,
   kGlitched,
   kClimax,
 };
 
+// This class manages the state of the cube.
 class Cube {
  public:
-  static constexpr uint64_t kGlitchTimeoutMillis = 5000;
+  // How long until the cube enters glitch mode.
+  static constexpr uint64_t kGlitchTimeoutMillis = 5 * 1000;
+
+  // How long the cube stays in glitch mode.
+  static constexpr uint64_t kGlitchDurationMillis = 10 * 1000;
+
+  // How long the cube stays in climax mode.
+  static constexpr uint64_t kClimaxDurationMillis = 10 * 1000;
 
   // Registers a wall with the cube.
   Cube& AddWall(Wall wall);

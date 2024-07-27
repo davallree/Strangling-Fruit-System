@@ -58,6 +58,4 @@ void setup() {
   cube.Connect();
 }
 
-constexpr uint64_t kGlitchTimeoutMillis = 5000;
-
 void loop() { cube.Update(); }
