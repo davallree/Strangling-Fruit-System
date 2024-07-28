@@ -23,9 +23,6 @@ MacAddress master_address;
 constexpr uint8_t kHandPin = BUTTON;
 bool hand_pressed = false;
 
-// The current wall animation.
-WallAnimation current_animation = WallAnimation::kAmbient;
-
 LEDController controller;
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
@@ -52,7 +49,7 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
   memcpy(&command, data, sizeof(command));
   Serial.printf("Received command, switching to %d\n",
                 command.animation_to_play);
-  current_animation = command.animation_to_play;
+  controller.SetCurrentAnimation(command.animation_to_play);
 }
 
 void SendHandEvent(const HandEvent &event) {
@@ -95,8 +92,10 @@ void setup() {
 
   // Initialize FastLED.
   controller.InitLEDs(16, 16);
-  FastLED.addLeds<NEOPIXEL, 5>(controller.led_buffer().data(),
-                               controller.led_buffer().size());
+  FastLED
+      .addLeds<NEOPIXEL, 5>(controller.led_buffer().data(),
+                            controller.led_buffer().size())
+      .setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(10);
 
   for (LED &led : controller.leds()) {
@@ -106,30 +105,13 @@ void setup() {
 }
 
 void animate() {
-  switch (current_animation) {
-    case WallAnimation::kAmbient: {
-      ambient_animation(controller.led_buffer());
-      break;
-    }
-    case WallAnimation::kTouched: {
-      touched_animation(controller.led_buffer());
-      break;
-    }
-    case WallAnimation::kGlitch: {
-      glitch_animation(controller.led_buffer());
-      break;
-    }
-    case WallAnimation::kClimax: {
-      climax_animation(controller.led_buffer());
-      break;
-    }
-  }
+  controller.Update();
   FastLED.show();
 }
 
 void loop() {
   EVERY_N_SECONDS(1) {
-    Serial.printf("Current animation: %d\n", current_animation);
+    Serial.printf("Current animation: %d\n", controller.current_animation());
   }
   animate();
   if (digitalRead(kHandPin) == LOW) {
