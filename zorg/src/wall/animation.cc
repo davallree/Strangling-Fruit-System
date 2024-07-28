@@ -61,6 +61,7 @@ void LEDController::SetCurrentAnimation(WallAnimation animation) {
       break;
     }
     case WallAnimation::kTouched: {
+      SetCurrentPattern(TouchedPattern);
       break;
     }
   }
@@ -81,13 +82,20 @@ void LEDController::SetCurrentPattern(AmbientPattern pattern,
 }
 
 void LEDController::Update() {
+  uint64_t now = millis();
+  uint64_t elapsed = now - transition_start_millis_;
+  bool in_transition = elapsed < transition_duration_millis_;
   switch (current_animation_) {
     case WallAnimation::kAmbient: {
-      // Ambient switches the pattern every N seconds.
+      // Ambient switches the pattern every N seconds, unless there's an ongoing
+      // transition.
       EVERY_N_SECONDS(5) {
-        current_ambient_pattern_ =
-            (current_ambient_pattern_ + 1) % ambient_patterns.size();
-        SetCurrentPattern(ambient_patterns[current_ambient_pattern_], 1000);
+        if (!in_transition) {
+          current_ambient_pattern_ =
+              (current_ambient_pattern_ + 1) % ambient_patterns.size();
+          SetCurrentPattern(ambient_patterns[current_ambient_pattern_], 1000);
+          return;
+        }
       }
       break;
     }
@@ -95,13 +103,11 @@ void LEDController::Update() {
       break;
   }
   // Call the current pattern.
-  current_pattern_(led_buffer_.leds());
+  current_pattern_(led_buffer_);
 
   // Calculate how much to blend the current pattern with the previous
   // pattern.
-  uint64_t now = millis();
-  uint64_t elapsed = now - transition_start_millis_;
-  if (elapsed < transition_duration_millis_) {
+  if (in_transition) {
     float ratio = float(elapsed) / float(transition_duration_millis_);
     fract8 blend = ratio * 255;
     blend = ease8InOutCubic(blend);
@@ -110,7 +116,7 @@ void LEDController::Update() {
                   255 - blend);
     // Call the previous pattern's function, but store in the alternate buffer.
     if (previous_pattern_ != nullptr) {
-      previous_pattern_(previous_buffer_.leds());
+      previous_pattern_(previous_buffer_);
       // Fade out the previous pattern.
       // fadeToBlackBy(previous_buffer_.raw_led_data(),
       //               previous_buffer_.num_leds(), blend);
@@ -121,36 +127,44 @@ void LEDController::Update() {
   }
 }
 
-void LEDController::OutwardWave(std::vector<LED>& leds) {
+void LEDController::OutwardWave(LEDBuffer& buffer) {
   uint8_t wave_phase = beat8(20);
 
-  for (LED& led : leds) {
+  for (LED& led : buffer.leds()) {
     uint8_t brightness = sin8(mul8(led.radius() - wave_phase, 2));
     // Don't set the pixel directly: just add to it.
     led.color().setRGB(128, 0, 128).fadeToBlackBy(255 - brightness);
   }
 }
 
-void LEDController::InwardWave(std::vector<LED>& leds) {
+void LEDController::InwardWave(LEDBuffer& buffer) {
   uint8_t wave_phase = beat8(20);
 
-  for (LED& led : leds) {
+  for (LED& led : buffer.leds()) {
     uint8_t brightness = sin8(mul8(255 - led.radius() - wave_phase, 2));
-    // Don't set the pixel directly: just add to it.
     led.color().setRGB(128, 0, 128).fadeToBlackBy(255 - brightness);
   }
 }
 
-void LEDController::RainbowHorizontal(std::vector<LED>& leds) {
+void LEDController::RainbowHorizontal(LEDBuffer& buffer) {
   uint8_t offset = beat8(20);
-  for (LED& led : leds) {
+  for (LED& led : buffer.leds()) {
     led.color() = ColorFromPalette(RainbowColors_p, led.y() + offset);
   }
 }
 
-void LEDController::RainbowVertical(std::vector<LED>& leds) {
+void LEDController::RainbowVertical(LEDBuffer& buffer) {
   uint8_t offset = beat8(20);
-  for (LED& led : leds) {
+  for (LED& led : buffer.leds()) {
     led.color() = ColorFromPalette(RainbowColors_p, led.x() + offset);
+  }
+}
+
+void LEDController::TouchedPattern(LEDBuffer& buffer) {
+  uint8_t wave_phase = beat8(66);
+
+  for (LED& led : buffer.leds()) {
+    uint8_t brightness = sin8(255 - led.radius() - wave_phase);
+    led.color().setHSV(212, 255, brightness);
   }
 }

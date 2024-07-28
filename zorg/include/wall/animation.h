@@ -48,7 +48,7 @@ class LEDController {
  public:
   static constexpr int kDefaultTransitionDurationMillis = 1000;
   // Ambient patterns take in the LEDs, and a blend factor.
-  typedef void (*AmbientPattern)(std::vector<LED>&);
+  typedef void (*AmbientPattern)(LEDBuffer&);
 
   LEDController();
 
@@ -89,14 +89,18 @@ class LEDController {
   WallAnimation current_animation_ = WallAnimation::kAmbient;
 
   // Ambient patterns.
-  static void OutwardWave(std::vector<LED>& leds);
-  static void InwardWave(std::vector<LED>& leds);
-  static void RainbowHorizontal(std::vector<LED>& leds);
-  static void RainbowVertical(std::vector<LED>& leds);
+  static void OutwardWave(LEDBuffer& buffer);
+  static void InwardWave(LEDBuffer& buffer);
+  static void RainbowHorizontal(LEDBuffer& buffer);
+  static void RainbowVertical(LEDBuffer& buffer);
+
+  // Other patterns.
+  static void TouchedPattern(LEDBuffer& buffer);
 
   //  Patterns that the ambient animation cycles through.
   const std::vector<AmbientPattern> ambient_patterns = {
-      RainbowVertical, OutwardWave, InwardWave, RainbowHorizontal};
+      TouchedPattern, RainbowVertical, OutwardWave, InwardWave,
+      RainbowHorizontal};
   // Index into ambient_patterns.
   uint8_t current_ambient_pattern_ = 0;
 
