@@ -23,19 +23,17 @@ LEDController::LEDController() { SetCurrentPattern(ambient_patterns[0], 0); }
 void LEDController::InitLEDs(int num_leds, const uint8_t* coordsX,
                              const uint8_t* coordsY, const uint8_t* angles,
                              const uint8_t* radii) {
-  InitLedBuffer(num_leds);
-  leds_.reserve(led_buffer_.size());
-  for (int i = 0; i < led_buffer_.size(); ++i) {
-    leds_.push_back(
-        LED(led_buffer_[i], coordsX[i], coordsY[i], angles[i], radii[i]));
+  InitBuffers(num_leds);
+  for (int i = 0; i < num_leds; ++i) {
+    led_buffer_.AddLED(coordsX[i], coordsY[i], angles[i], radii[i]);
+    previous_buffer_.AddLED(coordsX[i], coordsY[i], angles[i], radii[i]);
   }
 }
 
 void LEDController::InitLEDs(int sizeX, int sizeY) {
-  InitLedBuffer(sizeX * sizeY);
+  InitBuffers(sizeX * sizeY);
   float centerX = sizeX / 2;
   float centerY = sizeY / 2;
-  leds_.reserve(led_buffer_.size());
 
   float max_radius = std::max(centerX, centerY);
   for (int y = 0; y < sizeY; ++y) {
@@ -48,8 +46,8 @@ void LEDController::InitLEDs(int sizeX, int sizeY) {
       uint8_t angle256 = MapTo256(angle, 0.f, (float)(2 * PI));
       float radius = hypot(x - centerX, y - centerY);
       uint8_t radius256 = MapTo256(radius, 0.f, max_radius);
-      leds_.push_back(
-          LED(led_buffer_[(y * sizeY) + x], x256, y256, angle256, radius256));
+      led_buffer_.AddLED(x256, y256, angle256, radius256);
+      previous_buffer_.AddLED(x256, y256, angle256, radius256);
     }
   }
 }
@@ -68,8 +66,9 @@ void LEDController::SetCurrentAnimation(WallAnimation animation) {
   }
 }
 
-void LEDController::InitLedBuffer(int num_leds) {
-  led_buffer_.assign(num_leds, CRGB::Black);
+void LEDController::InitBuffers(int num_leds) {
+  led_buffer_.Init(num_leds);
+  previous_buffer_.Init(num_leds);
 }
 
 void LEDController::SetCurrentPattern(AmbientPattern pattern,
@@ -95,64 +94,63 @@ void LEDController::Update() {
     default:
       break;
   }
+  // Call the current pattern.
+  current_pattern_(led_buffer_.leds());
 
   // Calculate how much to blend the current pattern with the previous
   // pattern.
   uint64_t now = millis();
   uint64_t elapsed = now - transition_start_millis_;
-  fract8 blend = 255;
   if (elapsed < transition_duration_millis_) {
     float ratio = float(elapsed) / float(transition_duration_millis_);
-    blend = ratio * 255;
+    fract8 blend = ratio * 255;
     blend = ease8InOutCubic(blend);
-  }
-
-  fill_solid(led_buffer_.data(), led_buffer_.size(), CRGB::Black);
-  current_pattern_(leds_, blend);
-  // Optimization: don't bother calling previous animation if blend_factor is
-  // 255.
-  if (blend < 255) {
-    // Call the current pattern's function.
-    if (previous_pattern_ != nullptr) previous_pattern_(leds_, 255 - blend);
+    // Fade in the current pattern.
+    fadeToBlackBy(led_buffer_.raw_led_data(), led_buffer_.num_leds(),
+                  255 - blend);
+    // Call the previous pattern's function, but store in the alternate buffer.
+    if (previous_pattern_ != nullptr) {
+      previous_pattern_(previous_buffer_.leds());
+      // Fade out the previous pattern.
+      // fadeToBlackBy(previous_buffer_.raw_led_data(),
+      //               previous_buffer_.num_leds(), blend);
+      // Blend the two.
+      nblend(led_buffer_.raw_led_data(), previous_buffer_.raw_led_data(),
+             led_buffer_.num_leds(), 255 - blend);
+    }
   }
 }
 
-void LEDController::OutwardWave(std::vector<LED>& leds, fract8 blend_factor) {
+void LEDController::OutwardWave(std::vector<LED>& leds) {
   uint8_t wave_phase = beat8(20);
 
   for (LED& led : leds) {
     uint8_t brightness = sin8(mul8(led.radius() - wave_phase, 2));
     // Don't set the pixel directly: just add to it.
-    CRGB color = CRGB(128, 0, 128).fadeToBlackBy(255 - brightness);
-    nblend(led.color(), color, blend_factor);
+    led.color().setRGB(128, 0, 128).fadeToBlackBy(255 - brightness);
   }
 }
 
-void LEDController::InwardWave(std::vector<LED>& leds, fract8 blend_factor) {
+void LEDController::InwardWave(std::vector<LED>& leds) {
   uint8_t wave_phase = beat8(20);
 
   for (LED& led : leds) {
     uint8_t brightness = sin8(mul8(255 - led.radius() - wave_phase, 2));
     // Don't set the pixel directly: just add to it.
-    CRGB color = CRGB(128, 0, 128).fadeToBlackBy(255 - brightness);
-    nblend(led.color(), color, blend_factor);
+    led.color().setRGB(128, 0, 128).fadeToBlackBy(255 - brightness);
   }
 }
 
-void LEDController::RainbowHorizontal(std::vector<LED>& leds,
-                                      fract8 blend_factor) {
+void LEDController::RainbowHorizontal(std::vector<LED>& leds) {
   uint8_t offset = beat8(20);
   for (LED& led : leds) {
-    nblend(led.color(), ColorFromPalette(RainbowColors_p, led.y() + offset),
-           blend_factor);
+    led.color() = ColorFromPalette(RainbowColors_p, led.y() + offset);
   }
 }
 
-void LEDController::RainbowVertical(std::vector<LED>& leds,
-                                    fract8 blend_factor) {
+void LEDController::RainbowVertical(std::vector<LED>& leds) {
   uint8_t offset = beat8(20);
   for (LED& led : leds) {
-    nblend(led.color(), ColorFromPalette(RainbowColors_p, led.x() + offset),
-           blend_factor);
+    led.color() = ColorFromPalette(RainbowColors_p, led.x() + offset);
   }
 }

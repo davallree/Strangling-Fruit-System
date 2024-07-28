@@ -93,8 +93,8 @@ void setup() {
   // Initialize FastLED.
   controller.InitLEDs(16, 16);
   FastLED
-      .addLeds<NEOPIXEL, 5>(controller.led_buffer().data(),
-                            controller.led_buffer().size())
+      .addLeds<NEOPIXEL, 5>(controller.led_data().data(),
+                            controller.led_data().size())
       .setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(10);
 

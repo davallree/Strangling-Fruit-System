@@ -27,12 +27,28 @@ class LED {
   uint8_t radius_;
 };
 
+class LEDBuffer {
+ public:
+  void Init(int size) { led_data_.assign(size, CRGB::Black); }
+  void AddLED(uint8_t x, uint8_t y, uint8_t angle, uint8_t radius) {
+    leds_.push_back(LED(led_data_[leds_.size()], x, y, angle, radius));
+  }
+  std::vector<LED>& leds() { return leds_; }
+  std::vector<CRGB>& led_data() { return led_data_; }
+  CRGB* raw_led_data() { return led_data_.data(); }
+  int num_leds() { return led_data_.size(); }
+
+ private:
+  std::vector<LED> leds_;
+  std::vector<CRGB> led_data_;
+};
+
 // Controls the LED matrix.
 class LEDController {
  public:
   static constexpr int kDefaultTransitionDurationMillis = 1000;
   // Ambient patterns take in the LEDs, and a blend factor.
-  typedef void (*AmbientPattern)(std::vector<LED>&, fract8);
+  typedef void (*AmbientPattern)(std::vector<LED>&);
 
   LEDController();
 
@@ -48,17 +64,15 @@ class LEDController {
   // Call from loop().
   void Update();
 
-  std::vector<LED>& leds() { return leds_; }
+  std::vector<LED>& leds() { return led_buffer_.leds(); }
 
   // Buffer for FastLED data.
-  std::vector<CRGB>& led_buffer() { return led_buffer_; }
+  std::vector<CRGB>& led_data() { return led_buffer_.led_data(); }
 
   WallAnimation current_animation() const { return current_animation_; }
 
  private:
-  // Initializes the buffer with num_leds set to black.
-  void InitLedBuffer(int num_leds);
-
+  void InitBuffers(int num_leds);
   // Sets the current pattern to show on the LED matrix. The transition duration
   // determines how long the pattern will blend with the previous pattern.
   void SetCurrentPattern(
@@ -66,18 +80,19 @@ class LEDController {
       int transition_duration_millis = kDefaultTransitionDurationMillis);
 
   // The buffer that FastLED points to.
-  std::vector<CRGB> led_buffer_;
-  // LED objects point back to the buffer, but have nice accessors.
-  std::vector<LED> leds_;
+  LEDBuffer led_buffer_;
+  // This buffer isn't connected to FastLED. It is used to blend the previous
+  // animation into the current one.
+  LEDBuffer previous_buffer_;
 
   // The animation currently playing.
   WallAnimation current_animation_ = WallAnimation::kAmbient;
 
   // Ambient patterns.
-  static void OutwardWave(std::vector<LED>& leds, fract8 blend_factor);
-  static void InwardWave(std::vector<LED>& leds, fract8 blend_factor);
-  static void RainbowHorizontal(std::vector<LED>& leds, fract8 blend_factor);
-  static void RainbowVertical(std::vector<LED>& leds, fract8 blend_factor);
+  static void OutwardWave(std::vector<LED>& leds);
+  static void InwardWave(std::vector<LED>& leds);
+  static void RainbowHorizontal(std::vector<LED>& leds);
+  static void RainbowVertical(std::vector<LED>& leds);
 
   //  Patterns that the ambient animation cycles through.
   const std::vector<AmbientPattern> ambient_patterns = {
