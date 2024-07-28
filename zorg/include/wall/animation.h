@@ -96,11 +96,11 @@ class LEDController {
 
   // Other patterns.
   static void TouchedPattern(LEDBuffer& buffer);
+  static void GlitchedPattern(LEDBuffer& buffer);
 
   //  Patterns that the ambient animation cycles through.
   const std::vector<AmbientPattern> ambient_patterns = {
-      TouchedPattern, RainbowVertical, OutwardWave, InwardWave,
-      RainbowHorizontal};
+      RainbowVertical, OutwardWave, RainbowHorizontal, InwardWave};
   // Index into ambient_patterns.
   uint8_t current_ambient_pattern_ = 0;
 

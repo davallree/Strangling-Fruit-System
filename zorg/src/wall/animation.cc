@@ -61,8 +61,13 @@ void LEDController::SetCurrentAnimation(WallAnimation animation) {
       break;
     }
     case WallAnimation::kTouched: {
-      SetCurrentPattern(TouchedPattern);
+      // Transition more quickly into touched.
+      SetCurrentPattern(TouchedPattern, 200);
       break;
+    }
+    case WallAnimation::kGlitch: {
+      // Glitch pattern kicks in without transition.
+      SetCurrentPattern(GlitchedPattern, 0);
     }
   }
 }
@@ -166,5 +171,24 @@ void LEDController::TouchedPattern(LEDBuffer& buffer) {
   for (LED& led : buffer.leds()) {
     uint8_t brightness = sin8(255 - led.radius() - wave_phase);
     led.color().setHSV(212, 255, brightness);
+  }
+}
+
+void LEDController::GlitchedPattern(LEDBuffer& buffer) {
+  // Create a mostly static pattern with blue
+  for (int i = 0; i < buffer.num_leds(); ++i) {
+    int randVal = random(100);
+    buffer.led_data()[i] = CRGB::Blue;
+    if (randVal > 98) {
+      // Large glitch segments
+      int glitchLength = random(5, 30);
+      for (int j = 0; j < glitchLength && (i + j) < buffer.num_leds(); j++) {
+        buffer.led_data()[i + j] = random(2) == 0 ? CRGB::Black : CRGB::White;
+      }
+      i += glitchLength;  // Skip over the glitch segment
+    } else if (randVal > 90) {
+      // Small glitch pixels
+      buffer.led_data()[i] = random(2) == 0 ? CRGB::Black : CRGB::White;
+    }
   }
 }
