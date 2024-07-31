@@ -47,6 +47,7 @@ class LEDBuffer {
 class LEDController {
  public:
   static constexpr int kDefaultTransitionDurationMillis = 1000;
+  static constexpr int kAmbientPatternDurationSeconds = 10;
   // Ambient patterns take in the LEDs, and a blend factor.
   typedef void (*AmbientPattern)(LEDBuffer&);
 
@@ -55,8 +56,6 @@ class LEDController {
   // Initialize the LEDs with data from LED Mapper.
   void InitLEDs(int num_leds, const uint8_t* coordsX, const uint8_t* coordsY,
                 const uint8_t* angles, const uint8_t* radii);
-  // Initialize the LEDs with a grid of LEDs in alternating directions.
-  void InitLEDs(int sizeX, int sizeY);
 
   // Set the animation that should be currently playing.
   void SetCurrentAnimation(WallAnimation animation);
@@ -89,6 +88,8 @@ class LEDController {
   WallAnimation current_animation_ = WallAnimation::kAmbient;
 
   // Ambient patterns.
+  static void Spiral(LEDBuffer& buffer);
+  static void Rose(LEDBuffer& buffer);
   static void OutwardWave(LEDBuffer& buffer);
   static void InwardWave(LEDBuffer& buffer);
   static void RainbowHorizontal(LEDBuffer& buffer);
@@ -100,7 +101,8 @@ class LEDController {
 
   //  Patterns that the ambient animation cycles through.
   const std::vector<AmbientPattern> ambient_patterns = {
-      RainbowVertical, OutwardWave, RainbowHorizontal, InwardWave};
+      Rose,      Spiral, RainbowVertical, OutwardWave, RainbowHorizontal,
+      InwardWave};
   // Index into ambient_patterns.
   uint8_t current_ambient_pattern_ = 0;
 

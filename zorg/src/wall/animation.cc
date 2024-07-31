@@ -5,19 +5,6 @@
 #include <cmath>
 #include <vector>
 
-namespace {
-
-template <typename T>
-uint8_t MapTo256(T l, T inMin, T inMax) {
-  uint8_t outMin = 0;
-  uint8_t outMax = 255;
-  if (inMax - inMin + outMin == 0) return 0;
-
-  return ((l - inMin) * (outMax - outMin)) / (inMax - inMin) + outMin;
-}
-
-}  // namespace
-
 LEDController::LEDController() { SetCurrentPattern(ambient_patterns[0], 0); }
 
 void LEDController::InitLEDs(int num_leds, const uint8_t* coordsX,
@@ -27,28 +14,6 @@ void LEDController::InitLEDs(int num_leds, const uint8_t* coordsX,
   for (int i = 0; i < num_leds; ++i) {
     led_buffer_.AddLED(coordsX[i], coordsY[i], angles[i], radii[i]);
     previous_buffer_.AddLED(coordsX[i], coordsY[i], angles[i], radii[i]);
-  }
-}
-
-void LEDController::InitLEDs(int sizeX, int sizeY) {
-  InitBuffers(sizeX * sizeY);
-  float centerX = sizeX / 2;
-  float centerY = sizeY / 2;
-
-  float max_radius = std::max(centerX, centerY);
-  for (int y = 0; y < sizeY; ++y) {
-    bool even = ((y % 2) == 0);
-    for (int x = 0; x < sizeX; ++x) {
-      int corrected_x = even ? x : sizeX - x - 1;
-      uint8_t x256 = MapTo256(corrected_x, 0, sizeX);
-      uint8_t y256 = MapTo256(y, 0, sizeY);
-      float angle = atan2(centerY - y, centerX - x);
-      uint8_t angle256 = MapTo256(angle, 0.f, (float)(2 * PI));
-      float radius = hypot(x - centerX, y - centerY);
-      uint8_t radius256 = MapTo256(radius, 0.f, max_radius);
-      led_buffer_.AddLED(x256, y256, angle256, radius256);
-      previous_buffer_.AddLED(x256, y256, angle256, radius256);
-    }
   }
 }
 
@@ -94,7 +59,7 @@ void LEDController::Update() {
     case WallAnimation::kAmbient: {
       // Ambient switches the pattern every N seconds, unless there's an ongoing
       // transition.
-      EVERY_N_SECONDS(5) {
+      EVERY_N_SECONDS(kAmbientPatternDurationSeconds) {
         if (!in_transition) {
           current_ambient_pattern_ =
               (current_ambient_pattern_ + 1) % ambient_patterns.size();
@@ -166,10 +131,37 @@ void LEDController::RainbowVertical(LEDBuffer& buffer) {
 }
 
 void LEDController::TouchedPattern(LEDBuffer& buffer) {
-  uint8_t wave_phase = beat8(66);
+  uint8_t wave_phase = beat8(60);
 
   for (LED& led : buffer.leds()) {
-    uint8_t brightness = sin8(255 - led.radius() - wave_phase);
+    uint8_t brightness = sin8(mul8(255 - led.radius() - wave_phase, 2));
+    led.color().setRGB(128, 0, 128).fadeToBlackBy(255 - brightness);
+  }
+}
+
+void LEDController::Spiral(LEDBuffer& buffer) {
+  uint8_t twist = 2;
+  uint8_t strands = 4;
+
+  for (LED& led : buffer.leds()) {
+    uint8_t brightness =
+        sin8(twist * led.radius() + strands * led.angle() + beat8(60));
+    // uint8_t brightness = sin8(255 - led.radius() - wave_phase);
+    led.color().setHSV(212, 255, brightness);
+  }
+}
+
+void LEDController::Rose(LEDBuffer& buffer) {
+  uint8_t zoom = 1;
+  uint8_t shape = 1;
+  uint8_t petals = 3;
+  uint8_t rotation = beat8(60);
+  uint8_t ripple = beat8(10);
+
+  for (LED& led : buffer.leds()) {
+    uint8_t brightness =
+        sin8(zoom * led.radius() +
+             shape * sin8(petals * led.angle() + rotation) + ripple);
     led.color().setHSV(212, 255, brightness);
   }
 }
