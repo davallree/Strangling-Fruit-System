@@ -87,9 +87,6 @@ void LEDController::Update() {
     // Call the previous pattern's function, but store in the alternate buffer.
     if (previous_pattern_ != nullptr) {
       previous_pattern_(previous_buffer_);
-      // Fade out the previous pattern.
-      // fadeToBlackBy(previous_buffer_.raw_led_data(),
-      //               previous_buffer_.num_leds(), blend);
       // Blend the two.
       nblend(led_buffer_.raw_led_data(), previous_buffer_.raw_led_data(),
              led_buffer_.num_leds(), 255 - blend);
@@ -116,26 +113,16 @@ void LEDController::InwardWave(LEDBuffer& buffer) {
   }
 }
 
-void LEDController::RainbowHorizontal(LEDBuffer& buffer) {
-  uint8_t offset = beat8(20);
-  for (LED& led : buffer.leds()) {
-    led.color() = ColorFromPalette(RainbowColors_p, led.y() + offset);
-  }
-}
-
-void LEDController::RainbowVertical(LEDBuffer& buffer) {
-  uint8_t offset = beat8(20);
-  for (LED& led : buffer.leds()) {
-    led.color() = ColorFromPalette(RainbowColors_p, led.x() + offset);
-  }
-}
-
 void LEDController::TouchedPattern(LEDBuffer& buffer) {
   uint8_t wave_phase = beat8(60);
+  uint8_t pulse = beatsin8(100, 0, 150);
 
   for (LED& led : buffer.leds()) {
     uint8_t brightness = sin8(mul8(255 - led.radius() - wave_phase, 2));
-    led.color().setRGB(128, 0, 128).fadeToBlackBy(255 - brightness);
+    led.color()
+        .setRGB(128, 0, 128)
+        .fadeToBlackBy(255 - brightness)
+        .fadeToBlackBy(pulse);
   }
 }
 
@@ -156,12 +143,39 @@ void LEDController::Rose(LEDBuffer& buffer) {
   uint8_t shape = 1;
   uint8_t petals = 3;
   uint8_t rotation = beat8(60);
-  uint8_t ripple = beat8(10);
+  uint8_t ripple = beat8(60);
 
   for (LED& led : buffer.leds()) {
     uint8_t brightness =
         sin8(zoom * led.radius() +
              shape * sin8(petals * led.angle() + rotation) + ripple);
+    led.color().setHSV(212, 255, brightness);
+  }
+}
+
+void LEDController::Circles(LEDBuffer& buffer) {
+  uint8_t scale = 1;
+  uint8_t x_translation = 0;
+  uint8_t y_translation = 0;
+  uint8_t warp = beat8(60);
+
+  for (LED& led : buffer.leds()) {
+    uint8_t brightness = sin8(sin8(scale * led.x() + x_translation) +
+                              sin8(scale * led.y() + y_translation) + warp);
+    led.color().setHSV(212, 255, brightness);
+  }
+}
+
+void LEDController::Squiggles(LEDBuffer& buffer) {
+  uint8_t scale = 1;
+  uint8_t x_translation = 0;
+  uint8_t y_translation = 0;
+  uint8_t warp = beat8(60);
+
+  for (LED& led : buffer.leds()) {
+    uint8_t brightness = sin8(sin8(scale * led.x() + x_translation) +
+                              sin8(scale * led.y() + y_translation) +
+                              sin8(led.x() + led.y()) + warp);
     led.color().setHSV(212, 255, brightness);
   }
 }

@@ -90,10 +90,10 @@ class LEDController {
   // Ambient patterns.
   static void Spiral(LEDBuffer& buffer);
   static void Rose(LEDBuffer& buffer);
+  static void Circles(LEDBuffer& buffer);
+  static void Squiggles(LEDBuffer& buffer);
   static void OutwardWave(LEDBuffer& buffer);
   static void InwardWave(LEDBuffer& buffer);
-  static void RainbowHorizontal(LEDBuffer& buffer);
-  static void RainbowVertical(LEDBuffer& buffer);
 
   // Other patterns.
   static void TouchedPattern(LEDBuffer& buffer);
@@ -101,8 +101,7 @@ class LEDController {
 
   //  Patterns that the ambient animation cycles through.
   const std::vector<AmbientPattern> ambient_patterns = {
-      Rose,      Spiral, RainbowVertical, OutwardWave, RainbowHorizontal,
-      InwardWave};
+      Squiggles, Circles, Rose, Spiral, OutwardWave, InwardWave};
   // Index into ambient_patterns.
   uint8_t current_ambient_pattern_ = 0;
 
