@@ -47,7 +47,7 @@ class LEDBuffer {
 class LEDController {
  public:
   static constexpr int kDefaultTransitionDurationMillis = 1000;
-  static constexpr int kAmbientPatternDurationSeconds = 10;
+  static constexpr int kAmbientPatternDurationSeconds = 5;
   // Ambient patterns take in the LEDs, and a blend factor.
   typedef void (*AmbientPattern)(LEDBuffer&);
 
@@ -115,7 +115,5 @@ class LEDController {
   // Current pattern, should never be null.
   AmbientPattern current_pattern_;
 };
-
-// Implementation
 
 #endif  // INCLUDE_WALL_ANIMATION_H_

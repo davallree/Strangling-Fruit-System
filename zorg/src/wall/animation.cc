@@ -133,10 +133,11 @@ void LEDController::TouchedPattern(LEDBuffer& buffer) {
 void LEDController::Spiral(LEDBuffer& buffer) {
   uint8_t twist = 2;
   uint8_t strands = 4;
+  uint8_t rotation = -beat8(60);
 
   for (LED& led : buffer.leds()) {
     uint8_t brightness =
-        sin8(twist * led.radius() + strands * led.angle() + beat8(60));
+        sin8(twist * led.radius() + strands * led.angle() + rotation);
     // uint8_t brightness = sin8(255 - led.radius() - wave_phase);
     led.color().setHSV(212, 255, brightness);
   }
