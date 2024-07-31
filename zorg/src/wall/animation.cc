@@ -181,6 +181,9 @@ void LEDController::Squiggles(LEDBuffer& buffer) {
 }
 
 void LEDController::GlitchedPattern(LEDBuffer& buffer) {
+  static uint64_t next_glitch_millis = 0;
+  if (millis() < next_glitch_millis) return;
+  next_glitch_millis = millis() + random(100, 1000);
   // Create a mostly static pattern with blue
   for (int i = 0; i < buffer.num_leds(); ++i) {
     int randVal = random(100);
