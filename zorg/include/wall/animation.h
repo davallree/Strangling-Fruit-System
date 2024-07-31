@@ -54,8 +54,10 @@ class LEDController {
   LEDController();
 
   // Initialize the LEDs with data from LED Mapper.
-  void InitLEDs(int num_leds, const uint8_t* coordsX, const uint8_t* coordsY,
-                const uint8_t* angles, const uint8_t* radii);
+  void InitLEDs(int num_leds, const std::vector<uint8_t> coordsX,
+                const std::vector<uint8_t> coordsY,
+                const std::vector<uint8_t> angles,
+                const std::vector<uint8_t> radii);
 
   // Set the animation that should be currently playing.
   void SetCurrentAnimation(WallAnimation animation);

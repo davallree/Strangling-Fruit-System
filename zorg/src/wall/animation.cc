@@ -7,9 +7,10 @@
 
 LEDController::LEDController() { SetCurrentPattern(ambient_patterns[0], 0); }
 
-void LEDController::InitLEDs(int num_leds, const uint8_t* coordsX,
-                             const uint8_t* coordsY, const uint8_t* angles,
-                             const uint8_t* radii) {
+void LEDController::InitLEDs(int num_leds, const std::vector<uint8_t> coordsX,
+                             const std::vector<uint8_t> coordsY,
+                             const std::vector<uint8_t> angles,
+                             const std::vector<uint8_t> radii) {
   InitBuffers(num_leds);
   for (int i = 0; i < num_leds; ++i) {
     led_buffer_.AddLED(coordsX[i], coordsY[i], angles[i], radii[i]);
