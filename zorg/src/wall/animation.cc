@@ -34,6 +34,10 @@ void LEDController::SetCurrentAnimation(WallAnimation animation) {
       // Glitch pattern kicks in without transition.
       SetCurrentPattern(GlitchedPattern, 0);
     }
+    case WallAnimation::kClimax: {
+      // Transition more quickly into climax.
+      SetCurrentPattern(ClimaxPattern, 200);
+    }
   }
 }
 
@@ -199,5 +203,14 @@ void LEDController::GlitchedPattern(LEDBuffer& buffer) {
       // Small glitch pixels
       buffer.led_data()[i] = random(2) == 0 ? CRGB::Black : CRGB::White;
     }
+  }
+}
+
+void LEDController::ClimaxPattern(LEDBuffer& buffer) {
+  uint8_t hue_offset = beat8(60);
+  uint8_t offset = beat8(200);
+  for (LED& led : buffer.leds()) {
+    led.color().setHSV(led.radius() + offset, 255,
+                       sin8(2 * led.radius() - offset));
   }
 }

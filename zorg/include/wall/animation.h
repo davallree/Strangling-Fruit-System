@@ -98,6 +98,7 @@ class LEDController {
   // Other patterns.
   static void TouchedPattern(LEDBuffer& buffer);
   static void GlitchedPattern(LEDBuffer& buffer);
+  static void ClimaxPattern(LEDBuffer& buffer);
 
   //  Patterns that the ambient animation cycles through.
   const std::vector<AmbientPattern> ambient_patterns = {
