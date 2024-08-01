@@ -8,6 +8,7 @@
 
 enum class CubeState : uint8_t {
   kDefault,
+  kTouched,
   kGlitched,
   kClimax,
 };
@@ -15,14 +16,20 @@ enum class CubeState : uint8_t {
 // This class manages the state of the cube.
 class Cube {
  public:
-  // How long until the cube enters glitch mode.
-  static constexpr uint64_t kGlitchTimeoutMillis = 5 * 1000;
+  // How long each ambient pattern plays for.
+  static constexpr int kAmbientCycleMillis = 5 * 1000;
 
+  static constexpr int kAmbientTransitionMillis = 1 * 1000;
+  static constexpr uint8_t kAmbientSpeed = 60;
+
+  // How long until the cube enters glitch mode.
+  static constexpr int kGlitchTimeoutMillis = 5 * 1000;
   // How long the cube stays in glitch mode.
-  static constexpr uint64_t kGlitchDurationMillis = 10 * 1000;
+  static constexpr int kGlitchDurationMillis = 10 * 1000;
+  static constexpr uint8_t kGlitchSpeed = 60;
 
   // How long the cube stays in climax mode.
-  static constexpr uint64_t kClimaxDurationMillis = 10 * 1000;
+  static constexpr int kClimaxDurationMillis = 10 * 1000;
 
   // Registers a wall with the cube.
   Cube& AddWall(Wall wall);
@@ -48,6 +55,10 @@ class Cube {
   std::vector<Wall> walls_;
   CubeState state_ = CubeState::kDefault;
   uint64_t state_entered_millis_;
+
+  // Ambient patterns.
+  PatternId current_ambient_pattern_ = PatternId::kInWave;
+  uint64_t next_pattern_time_ = 0;
 };
 
 #endif  // INCLUDE_MASTER_CUBE_H_

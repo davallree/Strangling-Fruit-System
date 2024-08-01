@@ -3,6 +3,7 @@
 
 #include <FastLED.h>
 
+#include <memory>
 #include <vector>
 
 #include "common/messages.h"
@@ -27,6 +28,7 @@ class LED {
   uint8_t radius_;
 };
 
+// Buffer of LED data.
 class LEDBuffer {
  public:
   void Init(int size) { led_data_.assign(size, CRGB::Black); }
@@ -43,14 +45,130 @@ class LEDBuffer {
   std::vector<CRGB> led_data_;
 };
 
+// Base class for all the patterns.
+class Pattern {
+ public:
+  virtual void Update(LEDBuffer& buffer, uint8_t speed) = 0;
+};
+
+class NonePattern : public Pattern {
+ public:
+  void Update(LEDBuffer& buffer, uint8_t speed) override {}
+};
+
+class SpiralPattern : public Pattern {
+ public:
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    uint8_t rotation = beat8(speed);
+    for (LED& led : buffer.leds()) {
+      uint8_t brightness =
+          sin8(twist_ * led.radius() + strands_ * led.angle() - rotation);
+      led.color().setHSV(212, 255, brightness);
+    }
+  }
+
+ private:
+  uint8_t twist_ = 2;
+  uint8_t strands_ = 4;
+};
+
+class WavePattern : public Pattern {
+ public:
+  enum class Direction { kIn, kOut };
+
+  WavePattern(Direction direction) { SetDirection(direction); }
+
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    // Divide speed by 2, otherwise wave looks faster.
+    uint8_t wave_phase = (direction_ * beat8(speed)) / 2;
+
+    for (LED& led : buffer.leds()) {
+      uint8_t brightness = sin8(scale_ * (led.radius() + wave_phase));
+      led.color().setHSV(212, 255, brightness);
+    }
+  }
+
+  void SetDirection(Direction direction) {
+    direction_ = direction == Direction::kIn ? 1 : -1;
+  }
+
+ private:
+  uint8_t scale_ = 2;
+  int8_t direction_ = 1;
+};
+
+class RosePattern : public Pattern {
+ public:
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    uint8_t rotation = beat8(speed);
+    uint8_t ripple = beat8(speed);
+    for (LED& led : buffer.leds()) {
+      uint8_t brightness =
+          sin8(zoom_ * led.radius() +
+               shape_ * sin8(petals_ * led.angle() + rotation) + ripple);
+      led.color().setHSV(212, 255, brightness);
+    }
+  }
+
+ private:
+  uint8_t zoom_ = 1;
+  uint8_t shape_ = 1;
+  uint8_t petals_ = 3;
+};
+
+class CirclesPattern : public Pattern {
+ public:
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    uint8_t x_translation = 0;
+    uint8_t y_translation = 0;
+    uint8_t warp = beat8(speed);
+
+    for (LED& led : buffer.leds()) {
+      uint8_t brightness = sin8(sin8(scale_ * led.x() + x_translation) +
+                                sin8(scale_ * led.y() + y_translation) + warp);
+      led.color().setHSV(212, 255, brightness);
+    }
+  }
+
+ private:
+  uint8_t scale_ = 1;
+};
+
+class GlitchPattern : public Pattern {
+ public:
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    if (millis() > next_glitch_time_millis_) {
+      randSeed_ = millis();
+      next_glitch_time_millis_ =
+          millis() + random(100, lerp16by8(100, 4000, speed));
+    }
+    randomSeed(randSeed_);
+    // Create a mostly static pattern with blue
+    for (int i = 0; i < buffer.num_leds(); ++i) {
+      int randVal = random(100);
+      buffer.led_data()[i] = CRGB::Blue;
+      if (randVal > 98) {
+        // Large glitch segments
+        int glitchLength = random(5, 30);
+        for (int j = 0; j < glitchLength && (i + j) < buffer.num_leds(); j++) {
+          buffer.led_data()[i + j] = random(2) == 0 ? CRGB::Black : CRGB::White;
+        }
+        i += glitchLength;  // Skip over the glitch segment
+      } else if (randVal > 90) {
+        // Small glitch pixels
+        buffer.led_data()[i] = random(2) == 0 ? CRGB::Black : CRGB::White;
+      }
+    }
+  }
+
+ private:
+  int randSeed_ = 0;
+  uint64_t next_glitch_time_millis_ = 0;
+};
+
 // Controls the LED matrix.
 class LEDController {
  public:
-  static constexpr int kDefaultTransitionDurationMillis = 1000;
-  static constexpr int kAmbientPatternDurationSeconds = 5;
-  // Ambient patterns take in the LEDs, and a blend factor.
-  typedef void (*AmbientPattern)(LEDBuffer&);
-
   LEDController();
 
   // Initialize the LEDs with data from LED Mapper.
@@ -59,8 +177,10 @@ class LEDController {
                 const std::vector<uint8_t> angles,
                 const std::vector<uint8_t> radii);
 
-  // Set the animation that should be currently playing.
-  void SetCurrentAnimation(WallAnimation animation);
+  // Sets the current pattern to show on the LED matrix. The transition duration
+  // determines how long the pattern will blend with the previous pattern.
+  void SetCurrentPattern(PatternId pattern_id, uint8_t pattern_speed,
+                         int transition_duration_millis);
 
   // Call from loop().
   void Update();
@@ -70,15 +190,12 @@ class LEDController {
   // Buffer for FastLED data.
   std::vector<CRGB>& led_data() { return led_buffer_.led_data(); }
 
-  WallAnimation current_animation() const { return current_animation_; }
+  PatternId current_pattern_id() const { return current_pattern_id_; }
 
  private:
   void InitBuffers(int num_leds);
-  // Sets the current pattern to show on the LED matrix. The transition duration
-  // determines how long the pattern will blend with the previous pattern.
-  void SetCurrentPattern(
-      AmbientPattern pattern,
-      int transition_duration_millis = kDefaultTransitionDurationMillis);
+
+  std::vector<std::unique_ptr<Pattern>> patterns_;
 
   // The buffer that FastLED points to.
   LEDBuffer led_buffer_;
@@ -86,36 +203,16 @@ class LEDController {
   // animation into the current one.
   LEDBuffer previous_buffer_;
 
-  // The animation currently playing.
-  WallAnimation current_animation_ = WallAnimation::kAmbient;
-
-  // Ambient patterns.
-  static void Spiral(LEDBuffer& buffer);
-  static void Rose(LEDBuffer& buffer);
-  static void Circles(LEDBuffer& buffer);
-  static void Squiggles(LEDBuffer& buffer);
-  static void OutwardWave(LEDBuffer& buffer);
-  static void InwardWave(LEDBuffer& buffer);
-
-  // Other patterns.
-  static void TouchedPattern(LEDBuffer& buffer);
-  static void GlitchedPattern(LEDBuffer& buffer);
-  static void ClimaxPattern(LEDBuffer& buffer);
-
-  //  Patterns that the ambient animation cycles through.
-  const std::vector<AmbientPattern> ambient_patterns = {
-      Squiggles, Circles, Rose, Spiral, OutwardWave, InwardWave};
-  // Index into ambient_patterns.
-  uint8_t current_ambient_pattern_ = 0;
-
   // Time at which the current pattern started playing.
-  uint64_t transition_start_millis_;
+  uint64_t transition_start_millis_ = 0;
   // Duration of the pattern transition.
-  uint64_t transition_duration_millis_;
-  // Previous pattern, can be null.
-  AmbientPattern previous_pattern_;
-  // Current pattern, should never be null.
-  AmbientPattern current_pattern_;
+  uint64_t transition_duration_millis_ = 0;
+
+  // TODO: create a struct for that crap.
+  PatternId previous_pattern_id_ = PatternId::kNone;
+  uint8_t previous_pattern_speed_ = 60;
+  PatternId current_pattern_id_ = PatternId::kInWave;
+  uint8_t current_pattern_speed_ = 60;
 };
 
 #endif  // INCLUDE_WALL_ANIMATION_H_

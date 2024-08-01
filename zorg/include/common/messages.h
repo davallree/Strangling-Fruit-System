@@ -17,15 +17,25 @@ struct HandEvent {
   HandEventType type;
 };
 
-enum class WallAnimation : uint8_t {
-  kAmbient,
-  kTouched,
+enum PatternId : uint8_t {
+  kNone,
+
+  // Ambient patterns start.
+  kSpiral,
+  kOutWave,
+  kRose,
+  kCircles,
+  // Ambient patterns end.
+
+  kInWave,
   kGlitch,
-  kClimax,
+  kNumPatternIds,
 };
 
-struct MasterCommand {
-  WallAnimation animation_to_play;
+struct SetPatternCommand {
+  PatternId pattern_id;
+  uint8_t pattern_speed;
+  int transition_duration_millis;
 };
 
 #endif  // INCLUDE_COMMON_MESSAGES_H_

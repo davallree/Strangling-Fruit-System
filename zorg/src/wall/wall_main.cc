@@ -46,11 +46,14 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
   master_address = MacAddressFromArray(mac_addr);
 
   // Parse message.
-  MasterCommand command;
+  SetPatternCommand command;
   memcpy(&command, data, sizeof(command));
-  Serial.printf("Received command, switching to %d\n",
-                command.animation_to_play);
-  controller.SetCurrentAnimation(command.animation_to_play);
+  Serial.printf(
+      "Received command, switching to id=%d, speed=%d, transition=%d\n",
+      command.pattern_id, command.pattern_speed,
+      command.transition_duration_millis);
+  controller.SetCurrentPattern(command.pattern_id, command.pattern_speed,
+                               command.transition_duration_millis);
 }
 
 void SendHandEvent(const HandEvent &event) {
@@ -113,7 +116,7 @@ void animate() {
 
 void loop() {
   EVERY_N_SECONDS(1) {
-    Serial.printf("Current animation: %d\n", controller.current_animation());
+    Serial.printf("Current pattern: %d\n", controller.current_pattern_id());
   }
   animate();
   if (digitalRead(kHandPin) == LOW) {
