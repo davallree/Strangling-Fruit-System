@@ -35,29 +35,20 @@ float WallPressedProportion(const std::vector<Wall>& walls) {
 
 // For all the currently pressed hands, returns the time the last one to be
 // pressed. If no hands are currently pressed, returns nullopt;
-std::optional<uint64_t> LatestPressedTime(const std::vector<Wall>& walls) {
-  std::optional<uint64_t> latest_pressed_time;
+uint64_t LatestInteractionTime(const std::vector<Wall>& walls) {
+  uint64_t latest_interaction_time_ = 0;
   for (const Wall& wall : walls) {
-    if (wall.pressed()) {
-      if (!latest_pressed_time ||
-          *latest_pressed_time < wall.pressed_start_millis()) {
-        latest_pressed_time = wall.pressed_start_millis();
-      }
-    }
+    if (wall.last_interaction_time_millis() > latest_interaction_time_)
+      latest_interaction_time_ = wall.last_interaction_time_millis();
   }
-  return latest_pressed_time;
+  return latest_interaction_time_;
 }
 
 // Check if the cube should glitch.
 bool ShouldGlitch(const std::vector<Wall>& walls) {
-  std::optional<uint64_t> latest_wall_press_time = LatestPressedTime(walls);
-  if (latest_wall_press_time) {
-    uint64_t pressed_duration_millis = millis() - *latest_wall_press_time;
-    if (pressed_duration_millis > Cube::kGlitchTimeoutMillis) {
-      return true;
-    }
-  }
-  return false;
+  uint64_t latest_interaction_time = LatestInteractionTime(walls);
+  uint64_t elapsed = millis() - latest_interaction_time;
+  return elapsed > Cube::kGlitchTimeoutMillis;
 }
 
 }  // namespace
@@ -114,9 +105,6 @@ void Cube::Update() {
       if (time_in_climax_state_millis > kClimaxDurationMillis) {
         Serial.println("Leaving climax state.");
         SetState(CubeState::kDefault);
-        for (Wall& wall : walls_) {
-          // wall.SetState(WallState::kUnpressed);
-        }
       }
       break;
     }
@@ -132,11 +120,6 @@ Wall* Cube::GetWall(MacAddress address) {
 
 void Cube::OnHandEvent(const MacAddress& mac_address,
                        const HandEvent& hand_event) {
-  if (state_ == CubeState::kGlitched || state_ == CubeState::kClimax) {
-    Serial.println("Cube is glitched/climaxed, ignoring hand.");
-    return;
-  }
-
   // Get the wall that sent the event.
   Wall* wall = GetWall(mac_address);
   if (wall == nullptr) {
@@ -151,6 +134,11 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   }
   if (hand_event.type == HandEventType::kReleased) {
     wall->OnHandReleased();
+  }
+
+  if (state_ == CubeState::kGlitched || state_ == CubeState::kClimax) {
+    Serial.println("Cube is glitched/climaxed, ignoring hand.");
+    return;
   }
 
   // Check if we need to enter climax state.

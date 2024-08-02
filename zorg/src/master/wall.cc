@@ -42,7 +42,10 @@ void Wall::SendSetPatternCommand(const SetPatternCommand& command) const {
 
 void Wall::OnHandPressed() {
   pressed_ = true;
-  pressed_start_millis_ = millis();
+  last_interaction_time_millis_ = millis();
 }
 
-void Wall::OnHandReleased() { pressed_ = false; }
+void Wall::OnHandReleased() {
+  pressed_ = false;
+  last_interaction_time_millis_ = millis();
+}

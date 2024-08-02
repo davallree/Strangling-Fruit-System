@@ -21,8 +21,10 @@ class Wall {
 
   bool pressed() const { return pressed_; }
 
-  // If wall is pressed, time at which it started being pressed.
-  uint64_t pressed_start_millis() const { return pressed_start_millis_; }
+  // Last time a wall was pressed or released.
+  uint64_t last_interaction_time_millis() const {
+    return last_interaction_time_millis_;
+  }
 
   // Handler for the hand pressed signal coming from the wall MCU.
   void OnHandPressed();
@@ -33,16 +35,16 @@ class Wall {
   void SetPattern(PatternId pattern_id, uint8_t pattern_speed,
                   int transition_duration_millis);
 
- private:
   // Send a command to the wall MCU.
   void SendSetPatternCommand(const SetPatternCommand& command) const;
 
+ private:
   // MAC address of the wall being controlled.
   MacAddress address_;
 
   bool pressed_;
   // If hand is pressed, time at which it became pressed.
-  uint64_t pressed_start_millis_;
+  uint64_t last_interaction_time_millis_;
 };
 
 #endif  // INCLUDE_MASTER_WALL_H_

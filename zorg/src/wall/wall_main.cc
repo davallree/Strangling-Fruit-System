@@ -102,11 +102,6 @@ void setup() {
       .setCorrection(TypicalLEDStrip);
   FastLED.setBrightness(10);
   FastLED.setMaxRefreshRate(60, true);
-
-  for (LED &led : controller.leds()) {
-    Serial.printf("{x: %d, y: %d, angle: %d, radius: %d}\n", led.x(), led.y(),
-                  led.angle(), led.radius());
-  }
 }
 
 void animate() {

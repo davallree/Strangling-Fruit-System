@@ -51,9 +51,12 @@ class Pattern {
   virtual void Update(LEDBuffer& buffer, uint8_t speed) = 0;
 };
 
+// All LEDs off.
 class NonePattern : public Pattern {
  public:
-  void Update(LEDBuffer& buffer, uint8_t speed) override {}
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    fill_solid(buffer.raw_led_data(), buffer.num_leds(), CRGB::Black);
+  }
 };
 
 class SpiralPattern : public Pattern {
