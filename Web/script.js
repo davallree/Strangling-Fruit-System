@@ -3,6 +3,9 @@ class CubeApp {
   connectButton = document.getElementById('connect-button');
   messagesConsole = document.getElementById('messages');
 
+  ambientSound = new AmbientSound();
+  pressedSound = new PressedSound();
+
   constructor() {
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.serialHandler.messageCallback = this.onMessage;
@@ -26,6 +29,9 @@ class CubeApp {
       case 'debug':
         this.debug(msg.params[0]);
         break;
+      case 'playSound':
+        this.playSound(msg.params.soundName, msg.params.soundParams);
+        break;
       default:
         console.error('unknown method: ', msg.method);
     }
@@ -36,36 +42,26 @@ class CubeApp {
       `<p>[${new Date().toLocaleString()}] ${text}</p>`;
   }
 
-  playSound() {
-
+  playSound(soundName, soundParams) {
+    if (soundName !== 'ambient') {
+      this.ambientSound.pause();
+    }
+    console.log('playing sound: ', soundName);
+    switch (soundName) {
+      case 'ambient':
+        this.ambientSound.play();
+        break;
+      case 'pressed':
+        this.pressedSound.play(soundParams.pressedCount);
+        break;
+    }
   }
 }
 new CubeApp();
 /*
-document.getElementById('startButton').addEventListener('click', async () => {
-  await Tone.start();
-  document.getElementById('startButton').style.display = 'none';
-  playAmbientSound();
-  console.log("Web Audio Initialized and Ambient Sound Started");
-});
-
 let currentState = 'A';
 let stateStartTime = null;
 let glitchTimeout = null;
-
-// Listen for incoming serial messages and handle them
-window.addEventListener('serialMessage', (event) => {
-  const message = event.detail;
-  document.getElementById('messages').innerHTML += `<p>${message}</p>`;
-  handleSerialMessage(message);
-});
-
-function handleSerialMessage(message) {
-  const state = parseSerialMessage(message);
-  if (state !== currentState) {
-    transitionToState(state);
-  }
-}
 
 function transitionToState(newState) {
   stopCurrentStateSound();
@@ -126,15 +122,4 @@ function startStateSound(state) {
       break;
   }
 }
-
-function parseSerialMessage(message) {
-  if (message.includes('0 button')) return 'A';
-  if (message.includes('1 button')) return 'B';
-  if (message.includes('2 button')) return 'C';
-  if (message.includes('3 button')) return 'D';
-  if (message.includes('4 button')) return 'E';
-  return null;
-}
-
-window.handleSerialMessage = handleSerialMessage;
 */

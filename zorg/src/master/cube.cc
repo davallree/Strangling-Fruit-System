@@ -6,6 +6,7 @@
 #include <optional>
 #include <vector>
 
+#include "master/serial.h"
 #include "master/wall.h"
 
 namespace {
@@ -25,12 +26,12 @@ bool NoWallsPressed(const std::vector<Wall>& walls) {
   return true;
 }
 
-float WallPressedProportion(const std::vector<Wall>& walls) {
+float WallPressedCount(const std::vector<Wall>& walls) {
   int pressed_count = 0;
   for (const Wall& wall : walls) {
     if (wall.pressed()) pressed_count++;
   }
-  return (float)pressed_count / walls.size();
+  return pressed_count;
 }
 
 // For all the currently pressed hands, returns the time the last one to be
@@ -146,9 +147,6 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
     Serial.println("Entering climax state.");
     // Set the cube and all the walls to climax state.
     SetState(CubeState::kClimax);
-    for (Wall& wall : walls_) {
-      // wall.SetState(WallState::kClimax);
-    }
     return;
   }
 
@@ -159,7 +157,8 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   SetState(CubeState::kTouched);
 
   // Check how many walls are pressed, and set the patterns accordingly.
-  float pressed_ratio = WallPressedProportion(walls_);
+  int num_walls_pressed = WallPressedCount(walls_);
+  float pressed_ratio = (float)num_walls_pressed / (float)walls_.size();
   uint8_t min_speed = 60;
   uint8_t max_speed = 180;
   uint8_t diff = max_speed - min_speed;
@@ -171,6 +170,8 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
       wall.SetPattern(PatternId::kOutWave, speed, 200);
     }
   }
+  // Play the pressed sound.
+  serial::PlayPressedSound(num_walls_pressed);
 }
 
 void Cube::SetState(CubeState state) {
@@ -186,6 +187,11 @@ void Cube::SetState(CubeState state) {
                         kAmbientTransitionMillis);
       }
       next_pattern_time_ = millis() + kAmbientCycleMillis;
+      // Start playing the ambient sound.
+      serial::PlayAmbientSound();
+      break;
+    }
+    case CubeState::kTouched: {
       break;
     }
     case CubeState::kGlitched: {

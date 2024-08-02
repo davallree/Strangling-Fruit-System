@@ -1,4 +1,5 @@
 class AmbientSound {
+  playing = false;
   constructor() {
     // Ambient sounds setup
     this.masterLimiter = new Tone.Limiter(-3).toDestination();
@@ -173,6 +174,8 @@ class AmbientSound {
   }
 
   play() {
+    if (this.playing) return;
+    this.playing = true;
     // Make sure the transport is started.
     Tone.Transport.start();
     // Always start the bass drone and play a single accent note when we begin.
@@ -184,6 +187,8 @@ class AmbientSound {
   }
 
   pause() {
+    if (!this.playing) return;
+    this.playing = false;
     // Stop the drone if it is playing.
     this.bassDrone.stop();
     // Clear out the scheduled events.
