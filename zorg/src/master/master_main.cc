@@ -10,6 +10,7 @@
 #include "common/common.h"
 #include "common/messages.h"
 #include "master/cube.h"
+#include "master/serial.h"
 #include "master/wall.h"
 
 void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
@@ -23,13 +24,6 @@ Cube cube;
 
 void OnDataReceived(const uint8_t* raw_addr, const uint8_t* data,
                     int data_len) {
-  // Debug info.
-  Serial.print("\r\nLast Packet Received:\t");
-  for (int i = 0; i < data_len; i++) {
-    Serial.printf("%#x", data[i]);
-  }
-  Serial.println();
-
   // Parse the address and event.
   MacAddress address = MacAddressFromArray(raw_addr);
   HandEvent event;
@@ -47,7 +41,7 @@ void setup() {
 
   Serial.begin(115200);
   InitEspNow();
-  Serial.println("Master MAC address: " + WiFi.macAddress());
+  serial::debug("Master MAC address: " + WiFi.macAddress());
 
   esp_now_register_send_cb(&OnDataSent);
   esp_now_register_recv_cb(&OnDataReceived);
