@@ -1,214 +1,185 @@
-// Ambient sounds setup
-const masterLimiter = new Tone.Limiter(-3).toDestination();
-const masterCompressor = new Tone.Compressor({
-    threshold: -15,
-    ratio: 3,
-    attack: 0.5,
-    release: 0.1
-}).connect(masterLimiter);
-const masterReverb = new Tone.Reverb({ decay: 20, wet: 0.7 }).connect(masterCompressor);
-const masterDelay = new Tone.FeedbackDelay({ delayTime: 0.2, feedback: 0.2 }).connect(masterReverb);
-const masterFilter = new Tone.Filter({ type: "lowpass", frequency: 1000, rolloff: -24 }).connect(masterDelay);
+class AmbientSound {
+  constructor() {
+    // Ambient sounds setup
+    this.masterLimiter = new Tone.Limiter(-3).toDestination();
+    this.masterCompressor = new Tone.Compressor({
+      threshold: -15,
+      ratio: 3,
+      attack: 0.5,
+      release: 0.1
+    }).connect(this.masterLimiter);
+    this.masterReverb = new Tone.Reverb({ decay: 20, wet: 0.7 }).connect(this.masterCompressor);
+    this.masterDelay = new Tone.FeedbackDelay({ delayTime: 0.2, feedback: 0.2 }).connect(this.masterReverb);
+    this.masterFilter = new Tone.Filter({ type: "lowpass", frequency: 1000, rolloff: -24 }).connect(this.masterDelay);
 
-// Simple oscillator test
-const testOscillator = new Tone.Oscillator("C4", "sine").toDestination();
+    // Deep bass drone
+    this.bassDrone = new Tone.FatOscillator({
+      type: "sine",
+      frequency: "A0",
+      spread: 60,
+      count: 3
+    }).connect(this.masterFilter);
+    this.bassDrone.volume.value = 0; // Set volume to a reasonable level
 
-document.getElementById('startButton').addEventListener('click', async () => {
-    await Tone.start();
-    document.getElementById('startButton').style.display = 'none';
-    testOscillator.start();
-    setTimeout(() => {
-        testOscillator.stop();
-        playAmbientSound();
-    }, 3000); // Play test tone for 3 seconds
-    console.log("Test Oscillator playing");
-});
+    // Mysterious pad with increased polyphony
+    this.pad = new Tone.PolySynth(Tone.Synth, {
+      oscillator: { type: "triangle" },
+      envelope: { attack: 2, decay: 1, sustain: 0.8, release: 5 },
+      maxPolyphony: 16
+    }).connect(this.masterFilter);
+    this.pad.volume.value = 0; // Set volume to a reasonable level
 
-// Deep bass drone
-const bassDrone = new Tone.FatOscillator({
-    type: "sine",
-    frequency: "A0",
-    spread: 60,
-    count: 3
-}).connect(masterFilter);
-bassDrone.volume.value = 0; // Set volume to a reasonable level
-console.log("bassDrone volume:", bassDrone.volume.value);
+    // Ethereal texture
+    this.texture = new Tone.Noise({ type: "brown" }).connect(this.masterFilter);
+    this.textureFilter = new Tone.AutoFilter({ frequency: 0.1, octaves: 5, baseFrequency: 100 })
+      .connect(this.texture.volume)
+      .start();
+    this.texture.volume.value = -40; // Initial volume of texture
 
-// Mysterious pad with increased polyphony
-const pad = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: "triangle" },
-    envelope: { attack: 2, decay: 1, sustain: 0.8, release: 5 },
-    maxPolyphony: 16
-}).connect(masterFilter);
-pad.volume.value = 0; // Set volume to a reasonable level
-console.log("pad volume:", pad.volume.value);
-
-// Ethereal texture
-const texture = new Tone.Noise({ type: "brown" }).connect(masterFilter);
-const textureFilter = new Tone.AutoFilter({
-    frequency: 0.1,
-    octaves: 5,
-    baseFrequency: 100
-}).connect(texture.volume);
-texture.volume.value = -40; // Initial volume of texture
-texture.start();
-console.log("texture volume:", texture.volume.value);
-
-// Accent synth
-const accentSynth = new Tone.MembraneSynth({
-    pitchDecay: 0.05,
-    octaves: 2,
-    oscillator: { type: "sine" },
-    envelope: {
+    // Accent synth
+    this.accentSynth = new Tone.MembraneSynth({
+      pitchDecay: 0.05,
+      octaves: 2,
+      oscillator: { type: "sine" },
+      envelope: {
         attack: 0.01,
         decay: 0.4,
         sustain: 0.01,
         release: 0.4,
         attackCurve: "exponential"
-    }
-}).connect(masterFilter);
-accentSynth.volume.value = -7; // Increase accent synth volume
-console.log("accentSynth volume:", accentSynth.volume.value);
+      }
+    }).connect(this.masterFilter);
+    this.accentSynth.volume.value = -7; // Increase accent synth volume
 
-// LFOs for various modulations
-const bassLFO = new Tone.LFO({ frequency: 0.03, min: -30, max: 30 }).connect(bassDrone.frequency);
-const padLFO = new Tone.LFO({ frequency: 0.09, min: -5, max: 5 });
-const filterLFO = new Tone.LFO({ frequency: 0.02, min: 100, max: 1000 }).connect(masterFilter.frequency);
+    // LFOs for various modulations
+    this.bassLFO = new Tone.LFO({ frequency: 0.03, min: -30, max: 30 })
+      .connect(this.bassDrone.frequency)
+      .start();
+    // Seems like pad LFO was never connected.
+    this.padLFO = new Tone.LFO({ frequency: 0.09, min: -5, max: 5 });
+    this.padLFO.start();
+    this.filterLFO = new Tone.LFO({ frequency: 0.02, min: 100, max: 1000 })
+      .connect(this.masterFilter.frequency)
+      .start();
 
-// Panner for spatial effects
-const panner = new Tone.Panner().connect(masterFilter);
-bassDrone.connect(panner);
-pad.connect(panner);
+    // Panner for spatial effects
+    this.panner = new Tone.Panner().connect(this.masterFilter);
+    this.bassDrone.connect(this.panner);
+    this.pad.connect(this.panner);
+  }
 
-// Start continuous LFOs
-bassLFO.start();
-padLFO.start();
-filterLFO.start();
-textureFilter.start();
-
-// Function to generate deep pad chords
-function playPadChord() {
+  // Function to generate deep pad chords
+  playPadChord(now) {
     const root = Tone.Frequency("A0").toFrequency();
     const chord = [
-        root,
-        root * Tone.intervalToFrequencyRatio(Math.random() < 0.5 ? 3 : 4),
-        root * Tone.intervalToFrequencyRatio(7)
+      root,
+      root * Tone.intervalToFrequencyRatio(Math.random() < 0.5 ? 3 : 4),
+      root * Tone.intervalToFrequencyRatio(7)
     ];
-    pad.triggerAttackRelease(chord, "4n", Tone.now() + Math.random() * 10);
+    this.pad.triggerAttackRelease(chord, "4n", now + Math.random() * 10);
     console.log("Pad chord played:", chord);
-}
+  }
 
-// Function to play accent sounds
-function playAccent() {
-    const now = Tone.now();
+  // Function to play accent sounds
+  playAccent(now) {
     const duration = Math.random() * 0.6 + 0.2;
     const note = Tone.Frequency(Math.random() * 12 + 25, "midi").toFrequency();
-    
-    accentSynth.volume.setValueAtTime(-5, now);
-    accentSynth.triggerAttackRelease(note, duration, now);
+
+    this.accentSynth.volume.setValueAtTime(-5, now);
+    this.accentSynth.triggerAttackRelease(note, duration, now);
 
     // Random panning for each accent
-    panner.pan.setValueAtTime(Math.random() * 2 - 1, now);
+    this.panner.pan.setValueAtTime(Math.random() * 2 - 1, now);
 
     // Subtle filter sweep for added texture
     const filterSweep = new Tone.Filter({
-        type: "lowpass",
-        frequency: note * 2,
-        Q: 1
-    }).connect(masterFilter);
+      type: "lowpass",
+      frequency: note * 2,
+      Q: 1
+    }).connect(this.masterFilter);
 
     filterSweep.frequency.linearRampToValueAtTime(note / 2, now + duration);
-    accentSynth.connect(filterSweep);
+    this.accentSynth.connect(filterSweep);
 
     // Disconnect after the sound is finished
     Tone.Transport.scheduleOnce(() => {
-        accentSynth.disconnect(filterSweep);
-        filterSweep.dispose();
+      this.accentSynth.disconnect(filterSweep);
+      filterSweep.dispose();
     }, `+${duration + 0.1}`);
 
     console.log("Accent note played:", note, "duration:", duration);
-}
+  }
 
-// Function to randomly start and stop the bass drone
-function toggleBassDrone() {
-    const now = Tone.now();
-    const nextStartTime = Math.random() * 20 + 5;
-    const nextStopTime = Math.random() * 20 + 5;
+  // Function to start/stop the bass drone
+  toggleBassDrone(now) {
+    if (this.bassDrone.state === "started") {
+      this.bassDrone.stop(now);
+      console.log("Bass drone stopped.");
+    } else {
+      this.bassDrone.start(now);
+      console.log("Bass drone started.");
+    }
+  }
 
-    Tone.Transport.scheduleOnce(() => {
-        bassDrone.start(now);
-        console.log("Bass drone started");
+  // Function to update effects and modulations
+  updateEffects(now) {
+    this.panner.pan.linearRampToValueAtTime(Math.random() * 2 - 1, now + 20);
+    this.masterFilter.frequency.linearRampToValueAtTime(Math.random() * 1500 + 80, now + 30);
+    this.bassDrone.spread = Math.random() * 80 + 20;
 
-        Tone.Transport.scheduleOnce(() => {
-            bassDrone.stop(now + nextStopTime);
-            toggleBassDrone();
-            console.log("Bass drone stopped");
-        }, now + nextStopTime);
-    }, now + nextStartTime);
-}
-
-// Function to update effects and modulations
-function updateEffects() {
-    const now = Tone.now();
-    panner.pan.linearRampToValueAtTime(Math.random() * 2 - 1, now + 20);
-    masterFilter.frequency.linearRampToValueAtTime(Math.random() * 1500 + 80, now + 30);
-    bassDrone.spread = Math.random() * 80 + 20;
-    
-    bassLFO.frequency.linearRampToValueAtTime(Math.random() * 0.05, now + 20);
-    padLFO.frequency.linearRampToValueAtTime(Math.random() * 0.08, now + 20);
-    filterLFO.frequency.linearRampToValueAtTime(Math.random() * 0.03, now + 20);
-    textureFilter.baseFrequency = Math.random() * 200 + 50;
+    this.bassLFO.frequency.linearRampToValueAtTime(Math.random() * 0.05, now + 20);
+    this.padLFO.frequency.linearRampToValueAtTime(Math.random() * 0.08, now + 20);
+    this.filterLFO.frequency.linearRampToValueAtTime(Math.random() * 0.03, now + 20);
+    this.textureFilter.baseFrequency = Math.random() * 200 + 50;
 
     const bassVolume = Math.max(Math.random() * 30 - 30, -20);
-    bassDrone.volume.linearRampToValueAtTime(bassVolume, now + Math.random() * 20 + 10);
+    this.bassDrone.volume.linearRampToValueAtTime(bassVolume, now + Math.random() * 20 + 10);
 
     const textureVolume = Math.random() * 20 - 80;
-    texture.volume.linearRampToValueAtTime(textureVolume, now + Math.random() * 60 + 30);
+    this.texture.volume.linearRampToValueAtTime(textureVolume, now + Math.random() * 60 + 30);
 
     console.log("Effects updated");
-}
+  }
 
-// Schedule random events with varying intervals
-function scheduleEvents() {
+  // Schedule random events with varying intervals
+  scheduleEvents(now) {
+    console.log("Scheduling events.");
     const nextPadTime = Math.random() * 10 + 10;
     const nextAccentTime = Math.random() * 5 + 5;
     const nextEffectTime = Math.random() * 10 + 10;
+    const nextBassDrone = Math.random() * 20 + 5;
 
-    const now = Tone.now();
-
-    Tone.Transport.scheduleOnce(() => {
-        playPadChord();
+    Tone.Transport.scheduleOnce((time) => {
+      this.playPadChord(time);
     }, now + nextPadTime);
 
-    Tone.Transport.scheduleOnce(() => {
-        playAccent();
+    Tone.Transport.scheduleOnce((time) => {
+      this.playAccent(time);
     }, now + nextAccentTime);
 
-    Tone.Transport.scheduleOnce(() => {
-        updateEffects();
+    Tone.Transport.scheduleOnce((time) => {
+      this.updateEffects(time);
     }, now + nextEffectTime);
 
-    Tone.Transport.scheduleOnce(() => {
-        scheduleEvents();
+    Tone.Transport.scheduleOnce((time) => {
+      this.toggleBassDrone(time);
+    }, now + nextBassDrone);
+
+    Tone.Transport.scheduleOnce((time) => {
+      this.scheduleEvents(time);
     }, now + Math.max(nextPadTime, nextAccentTime, nextEffectTime) + 1);
-}
+  }
 
-function playAmbientSound() {
-    bassDrone.start();
-    playPadChord();
-    updateEffects();
-
+  play() {
     Tone.Transport.start();
-    scheduleEvents();
-    toggleBassDrone();
+    this.playAccent(Tone.now());
+    this.scheduleEvents(Tone.now());
     console.log("Ambient Sound is playing");
-}
+  }
 
-function stopAmbientSound() {
-    bassDrone.stop();
+  pause() {
+    this.bassDrone.stop();
     Tone.Transport.stop();
     console.log("Ambient Sound stopped");
+  }
 }
-
-window.playAmbientSound = playAmbientSound;
-window.stopAmbientSound = stopAmbientSound;
