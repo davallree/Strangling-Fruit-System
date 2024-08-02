@@ -30,7 +30,9 @@ class AmbientSound {
     this.pad.volume.value = 0; // Set volume to a reasonable level
 
     // Ethereal texture
-    this.texture = new Tone.Noise({ type: "brown" }).connect(this.masterFilter);
+    this.texture = new Tone.Noise({ type: "brown" })
+      .connect(this.masterFilter)
+      .start();
     this.textureFilter = new Tone.AutoFilter({ frequency: 0.1, octaves: 5, baseFrequency: 100 })
       .connect(this.texture.volume)
       .start();
@@ -147,7 +149,7 @@ class AmbientSound {
     const nextPadTime = Math.random() * 10 + 10;
     const nextAccentTime = Math.random() * 5 + 5;
     const nextEffectTime = Math.random() * 10 + 10;
-    const nextBassDrone = Math.random() * 20 + 5;
+    const nextBassDrone = Math.random() * 60 + 5;
 
     Tone.Transport.scheduleOnce((time) => {
       this.playPadChord(time);
@@ -171,15 +173,21 @@ class AmbientSound {
   }
 
   play() {
+    // Make sure the transport is started.
     Tone.Transport.start();
+    // Always start the bass drone and play a single accent note when we begin.
+    this.bassDrone.start();
     this.playAccent(Tone.now());
+    // Schedule the initial events.
     this.scheduleEvents(Tone.now());
     console.log("Ambient Sound is playing");
   }
 
   pause() {
+    // Stop the drone if it is playing.
     this.bassDrone.stop();
-    Tone.Transport.stop();
+    // Clear out the scheduled events.
+    Tone.Transport.cancel();
     console.log("Ambient Sound stopped");
   }
 }

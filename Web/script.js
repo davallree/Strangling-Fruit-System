@@ -11,6 +11,7 @@ class CubeApp {
   // Connect to the cube, and start Tone.js.
   connect = async () => {
     await Tone.start();
+    Tone.Transport.start();
     try {
       await this.serialHandler.connect();
       console.log('Connected to device');
