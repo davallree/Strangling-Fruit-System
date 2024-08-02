@@ -2,19 +2,24 @@ class CubeApp {
   serialHandler = new SerialHandler();
   connectButton = document.getElementById('connect-button');
   messagesConsole = document.getElementById('messages');
-
-  ambientSound = new AmbientSound();
-  pressedSound = new PressedSound();
+  currentSound = null;
 
   constructor() {
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.serialHandler.messageCallback = this.onMessage;
+
+    this.masterLimiter = new Tone.Limiter(-3).toDestination();
+    this.ambientSound = new AmbientSound(this.masterLimiter);
+    this.pressedSound = new PressedSound(this.masterLimiter);
+    this.glitchSound = new GlitchSound(this.masterLimiter);
   }
 
   // Connect to the cube, and start Tone.js.
   connect = async () => {
     await Tone.start();
     Tone.Transport.start();
+    // Load the glitch sound here.
+    this.glitchSound.load();
     try {
       await this.serialHandler.connect();
       console.log('Connected to device');
@@ -43,18 +48,23 @@ class CubeApp {
   }
 
   playSound(soundName, soundParams) {
-    if (soundName !== 'ambient') {
-      this.ambientSound.pause();
+    if (this.currentSound) {
+      this.currentSound.pause();
     }
     console.log('playing sound: ', soundName);
     switch (soundName) {
       case 'ambient':
-        this.ambientSound.play();
+        this.currentSound = this.ambientSound;
         break;
       case 'pressed':
-        this.pressedSound.play(soundParams.pressedCount);
+        this.pressedSound.speedMultiplier = soundParams.pressedCount;
+        this.currentSound = this.pressedSound;
+        break;
+      case 'glitch':
+        this.currentSound = this.glitchSound;
         break;
     }
+    this.currentSound.play();
   }
 }
 new CubeApp();

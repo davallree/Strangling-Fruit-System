@@ -1,14 +1,14 @@
 class AmbientSound {
   playing = false;
-  constructor() {
+  constructor(masterLimiter) {
     // Ambient sounds setup
-    this.masterLimiter = new Tone.Limiter(-3).toDestination();
+    // this.masterLimiter = new Tone.Limiter(-3).toDestination();
     this.masterCompressor = new Tone.Compressor({
       threshold: -15,
       ratio: 3,
       attack: 0.5,
       release: 0.1
-    }).connect(this.masterLimiter);
+    }).connect(masterLimiter);
     this.masterReverb = new Tone.Reverb({ decay: 20, wet: 0.7 }).connect(this.masterCompressor);
     this.masterDelay = new Tone.FeedbackDelay({ delayTime: 0.2, feedback: 0.2 }).connect(this.masterReverb);
     this.masterFilter = new Tone.Filter({ type: "lowpass", frequency: 1000, rolloff: -24 }).connect(this.masterDelay);

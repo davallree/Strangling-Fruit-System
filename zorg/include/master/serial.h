@@ -26,6 +26,14 @@ inline void PlayAmbientSound() {
   Serial.println();
 }
 
+inline void PlayGlitchSound() {
+  ArduinoJson::JsonDocument msg;
+  msg[kMethod] = kPlaySoundMethod;
+  msg[kParams][kSoundNameParam] = "glitch";
+  ArduinoJson::serializeJson(msg, Serial);
+  Serial.println();
+}
+
 inline constexpr char kSoundParamsParam[] = "soundParams";
 inline constexpr char kPressedCountParam[] = "pressedCount";
 inline void PlayPressedSound(uint8_t pressed_count) {

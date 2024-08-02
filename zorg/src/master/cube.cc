@@ -63,11 +63,12 @@ void Cube::Connect() {
   for (Wall& wall : walls_) {
     wall.Connect();
   }
+  SetState(CubeState::kAmbient);
 }
 
 void Cube::Update() {
   switch (state_) {
-    case CubeState::kDefault: {
+    case CubeState::kAmbient: {
       // Cycle through ambient patterns.
       if (millis() > next_pattern_time_) {
         PatternId first_pattern_id = PatternId::kSpiral;
@@ -96,7 +97,7 @@ void Cube::Update() {
       uint64_t time_in_glitched_state_millis = millis() - state_entered_millis_;
       if (time_in_glitched_state_millis > kGlitchDurationMillis) {
         Serial.println("Leaving glitched state.");
-        SetState(CubeState::kDefault);
+        SetState(CubeState::kAmbient);
       }
       break;
     }
@@ -105,7 +106,7 @@ void Cube::Update() {
       uint64_t time_in_climax_state_millis = millis() - state_entered_millis_;
       if (time_in_climax_state_millis > kClimaxDurationMillis) {
         Serial.println("Leaving climax state.");
-        SetState(CubeState::kDefault);
+        SetState(CubeState::kAmbient);
       }
       break;
     }
@@ -151,7 +152,7 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   }
 
   if (NoWallsPressed(walls_)) {
-    SetState(CubeState::kDefault);
+    SetState(CubeState::kAmbient);
     return;
   }
   SetState(CubeState::kTouched);
@@ -179,7 +180,7 @@ void Cube::SetState(CubeState state) {
   state_ = state;
   state_entered_millis_ = millis();
   switch (state) {
-    case CubeState::kDefault: {
+    case CubeState::kAmbient: {
       // When entering the default state, set all the walls to the current
       // pattern, and set the next pattern time.
       for (Wall& wall : walls_) {
@@ -198,6 +199,7 @@ void Cube::SetState(CubeState state) {
       for (Wall& wall : walls_) {
         wall.SetPattern(PatternId::kGlitch, kGlitchSpeed, 0);
       }
+      serial::PlayGlitchSound();
       break;
     }
   }

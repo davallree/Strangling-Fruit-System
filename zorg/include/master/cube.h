@@ -7,7 +7,8 @@
 #include "master/wall.h"
 
 enum class CubeState : uint8_t {
-  kDefault,
+  kInvalid,
+  kAmbient,
   kTouched,
   kGlitched,
   kClimax,
@@ -53,7 +54,7 @@ class Cube {
   void SetState(CubeState state);
 
   std::vector<Wall> walls_;
-  CubeState state_ = CubeState::kDefault;
+  CubeState state_ = CubeState::kInvalid;
   uint64_t state_entered_millis_;
 
   // Ambient patterns.
