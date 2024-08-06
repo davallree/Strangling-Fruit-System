@@ -96,10 +96,17 @@ void setup() {
 
   // Initialize FastLED.
   controller.InitLEDs(kNumLeds, coordsX, coordsY, angles, radii);
+#ifdef ACTUAL_WALL
+  FastLED
+      .addLeds<WS2811, 5>(controller.led_data().data(),
+                          controller.led_data().size())
+      .setCorrection(TypicalLEDStrip);
+#else
   FastLED
       .addLeds<NEOPIXEL, 5>(controller.led_data().data(),
                             controller.led_data().size())
       .setCorrection(TypicalLEDStrip);
+#endif
   FastLED.setBrightness(10);
   FastLED.setMaxRefreshRate(60, true);
 }

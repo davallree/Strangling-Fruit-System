@@ -169,6 +169,16 @@ class GlitchPattern : public Pattern {
   uint64_t next_glitch_time_millis_ = 0;
 };
 
+class ClimaxPhaseOnePattern : public Pattern {
+ public:
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    uint8_t offset = beatsin8(speed);
+    for (LED& led : buffer.leds()) {
+      led.color().setHSV(212, 255, qadd8(qsub8(led.y(), 100), offset));
+    }
+  }
+};
+
 // Controls the LED matrix.
 class LEDController {
  public:
@@ -214,7 +224,7 @@ class LEDController {
   // TODO: create a struct for that crap.
   PatternId previous_pattern_id_ = PatternId::kNone;
   uint8_t previous_pattern_speed_ = 60;
-  PatternId current_pattern_id_ = PatternId::kInWave;
+  PatternId current_pattern_id_ = PatternId::kClimaxPhaseOne;
   uint8_t current_pattern_speed_ = 60;
 };
 

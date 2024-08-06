@@ -16,6 +16,8 @@ LEDController::LEDController() {
   patterns_[PatternId::kOutWave] =
       std::make_unique<WavePattern>(WavePattern::Direction::kOut);
   patterns_[PatternId::kGlitch] = std::make_unique<GlitchPattern>();
+  patterns_[PatternId::kClimaxPhaseOne] =
+      std::make_unique<ClimaxPhaseOnePattern>();
 }
 
 void LEDController::InitLEDs(int num_leds, const std::vector<uint8_t> coordsX,

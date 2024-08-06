@@ -29,6 +29,8 @@ enum PatternId : uint8_t {
 
   kInWave,
   kGlitch,
+  // Climax stuff.
+  kClimaxPhaseOne,
   kNumPatternIds,
 };
 

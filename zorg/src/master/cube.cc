@@ -202,5 +202,11 @@ void Cube::SetState(CubeState state) {
       serial::PlayGlitchSound();
       break;
     }
+    case CubeState::kClimax: {
+      for (Wall& wall : walls_) {
+        wall.SetPattern(PatternId::kClimaxPhaseOne, 80, 200);
+      }
+      break;
+    }
   }
 }
