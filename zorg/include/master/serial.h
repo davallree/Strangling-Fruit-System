@@ -4,25 +4,17 @@
 #include <Arduino.h>
 
 #include <ArduinoJson.hpp>
+#include <mutex>
 
 namespace serial {
 inline constexpr char kMethod[] = "method";
 inline constexpr char kParams[] = "params";
-inline constexpr int TIMEOUT_MS = 1000;
+inline std::mutex serial_mutex;
 
 inline void SendJson(const ArduinoJson::JsonDocument& doc) {
+  std::lock_guard<std::mutex> lock(serial_mutex);
   ArduinoJson::serializeJson(doc, Serial);
   Serial.println();
-  // Wait for the ack, with a timeout.
-  unsigned long start_time = millis();
-  while (!Serial.available()) {
-    if ((millis() - start_time) > TIMEOUT_MS) {
-      // Timeout occurred, handle the error.
-      break;
-    }
-  }
-  // Read the ack, if any.
-  if (Serial.available()) Serial.read();
 }
 
 inline constexpr char kDebugMethod[] = "debug";

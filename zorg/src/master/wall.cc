@@ -26,11 +26,6 @@ void Wall::SetPattern(PatternId pattern_id, uint8_t pattern_speed,
 }
 
 void Wall::SendSetPatternCommand(const SetPatternCommand& command) const {
-  serial::Debug(
-      "Sending SetPatternCommand{pattern_id=%d, pattern_speed=%d, "
-      "transition_duration_millis=%d}.\n",
-      command.pattern_id, command.pattern_speed,
-      command.transition_duration_millis);
   esp_err_t result =
       esp_now_send(address_.data(), reinterpret_cast<const uint8_t*>(&command),
                    sizeof(command));
