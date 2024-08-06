@@ -12,6 +12,9 @@ class CubeApp {
     this.ambientSound = new AmbientSound(this.masterLimiter);
     this.pressedSound = new PressedSound(this.masterLimiter);
     this.glitchSound = new GlitchSound(this.masterLimiter);
+
+    // Reduce the volume so we don't get clipping.
+    Tone.Master.volume.value = -10;
   }
 
   // Connect to the cube, and start Tone.js.
@@ -70,7 +73,7 @@ class CubeApp {
     this.currentSound.play();
   }
 }
-new CubeApp();
+const app = new CubeApp();
 /*
 let currentState = 'A';
 let stateStartTime = null;
