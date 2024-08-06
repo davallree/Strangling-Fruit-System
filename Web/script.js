@@ -43,8 +43,11 @@ class CubeApp {
   }
 
   debug(text) {
-    this.messagesConsole.innerHTML +=
-      `<p>[${new Date().toLocaleString()}] ${text}</p>`;
+    const isScrolledToBottom = this.messagesConsole.scrollHeight - this.messagesConsole.clientHeight <= this.messagesConsole.scrollTop + 1;
+    this.messagesConsole.innerHTML += `<p>[${new Date().toLocaleString()}] ${text}</p>`;
+    if (isScrolledToBottom) {
+      this.messagesConsole.scrollTop = this.messagesConsole.scrollHeight;
+    }
   }
 
   playSound(soundName, soundParams) {

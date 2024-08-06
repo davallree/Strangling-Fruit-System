@@ -15,9 +15,10 @@
 
 void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
   // Debug outgoing data.
-  Serial.print("\r\nLast Packet Send Status:\t");
-  Serial.println(status == ESP_NOW_SEND_SUCCESS ? "Delivery Success"
-                                                : "Delivery Fail");
+  // serial::Debug("Last Packet Send Status: " + (status ==
+  // ESP_NOW_SEND_SUCCESS)
+  //                   ? "Delivery Success"
+  //                   : "Delivery Fail");
 }
 
 Cube cube;
@@ -41,7 +42,7 @@ void setup() {
 
   Serial.begin(115200);
   InitEspNow();
-  serial::debug("Master MAC address: " + WiFi.macAddress());
+  serial::Debug("Master MAC address: %s", WiFi.macAddress());
 
   esp_now_register_send_cb(&OnDataSent);
   esp_now_register_recv_cb(&OnDataReceived);

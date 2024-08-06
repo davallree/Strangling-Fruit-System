@@ -87,7 +87,7 @@ void Cube::Update() {
     }
     case CubeState::kTouched: {
       if (ShouldGlitch(walls_)) {
-        Serial.println("Timed out, entering glitch state.");
+        serial::Debug("Timed out, entering glitch state.");
         SetState(CubeState::kGlitched);
       }
       break;
@@ -96,7 +96,7 @@ void Cube::Update() {
       // Check if we need to exit glitched state.
       uint64_t time_in_glitched_state_millis = millis() - state_entered_millis_;
       if (time_in_glitched_state_millis > kGlitchDurationMillis) {
-        Serial.println("Leaving glitched state.");
+        serial::Debug("Leaving glitched state.");
         SetState(CubeState::kAmbient);
       }
       break;
@@ -105,7 +105,7 @@ void Cube::Update() {
       // Check if we need to exit climax state.
       uint64_t time_in_climax_state_millis = millis() - state_entered_millis_;
       if (time_in_climax_state_millis > kClimaxDurationMillis) {
-        Serial.println("Leaving climax state.");
+        serial::Debug("Leaving climax state.");
         SetState(CubeState::kAmbient);
       }
       break;
@@ -125,7 +125,7 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   // Get the wall that sent the event.
   Wall* wall = GetWall(mac_address);
   if (wall == nullptr) {
-    Serial.println("Unknown wall.");
+    serial::Debug("Unknown wall.");
   }
 
   // Set the state for that wall and update its pattern.
@@ -139,13 +139,13 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   }
 
   if (state_ == CubeState::kGlitched || state_ == CubeState::kClimax) {
-    Serial.println("Cube is glitched/climaxed, ignoring hand.");
+    serial::Debug("Cube is glitched/climaxed, ignoring hand.");
     return;
   }
 
   // Check if we need to enter climax state.
   if (WallsAllPressed(walls_)) {
-    Serial.println("Entering climax state.");
+    serial::Debug("Entering climax state.");
     // Set the cube and all the walls to climax state.
     SetState(CubeState::kClimax);
     return;

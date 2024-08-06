@@ -7,6 +7,7 @@
 
 #include "common/common.h"
 #include "common/messages.h"
+#include "master/serial.h"
 
 Wall::Wall(MacAddress address) : address_(std::move(address)) {}
 
@@ -25,7 +26,7 @@ void Wall::SetPattern(PatternId pattern_id, uint8_t pattern_speed,
 }
 
 void Wall::SendSetPatternCommand(const SetPatternCommand& command) const {
-  Serial.printf(
+  serial::Debug(
       "Sending SetPatternCommand{pattern_id=%d, pattern_speed=%d, "
       "transition_duration_millis=%d}.\n",
       command.pattern_id, command.pattern_speed,
@@ -33,10 +34,8 @@ void Wall::SendSetPatternCommand(const SetPatternCommand& command) const {
   esp_err_t result =
       esp_now_send(address_.data(), reinterpret_cast<const uint8_t*>(&command),
                    sizeof(command));
-  if (result == ESP_OK) {
-    Serial.println("Message sent successfully");
-  } else {
-    Serial.println("Error sending the message");
+  if (result != ESP_OK) {
+    serial::Debug("Error sending the message");
   }
 }
 

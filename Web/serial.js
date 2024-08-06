@@ -33,6 +33,10 @@ class SerialHandler {
       .pipeThrough(new TransformStream(new JsonTransformer()));
     const reader = inputStream.getReader();
 
+    const encoder = new TextEncoderStream();
+    encoder.readable.pipeTo(port.writable);
+    const writer = encoder.writable.getWriter();
+
     while (true) {
       try {
         const { value, done } = await reader.read();
@@ -43,6 +47,8 @@ class SerialHandler {
         }
         if (value && this.messageCallback) {
           this.messageCallback(value);
+          // Ack the message by sending an 'A' back to the ESP32.
+          await writer.write('A')
         }
       } catch (error) {
         console.error('Error reading data: ', error);
