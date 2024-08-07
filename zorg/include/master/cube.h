@@ -18,7 +18,7 @@ enum class CubeState : uint8_t {
 class Cube {
  public:
   // How long each ambient pattern plays for.
-  static constexpr int kAmbientCycleMillis = 5 * 1000;
+  static constexpr int kAmbientCycleMillis = 60 * 1000;
 
   static constexpr int kAmbientTransitionMillis = 1 * 1000;
   static constexpr uint8_t kAmbientSpeed = 60;
