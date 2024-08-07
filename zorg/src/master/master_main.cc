@@ -14,11 +14,9 @@
 #include "master/wall.h"
 
 void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
-  // Debug outgoing data.
-  // serial::Debug("Last Packet Send Status: " + (status ==
-  // ESP_NOW_SEND_SUCCESS)
-  //                   ? "Delivery Success"
-  //                   : "Delivery Fail");
+  if (status != ESP_NOW_SEND_SUCCESS) {
+    serial::Debug("Failed to send data.");
+  }
 }
 
 Cube cube;
