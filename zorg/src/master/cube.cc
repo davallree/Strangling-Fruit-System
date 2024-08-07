@@ -97,7 +97,7 @@ void Cube::Update() {
       uint64_t time_in_glitched_state_millis = millis() - state_entered_millis_;
       if (time_in_glitched_state_millis > kGlitchDurationMillis) {
         serial::Debug("Leaving glitched state.");
-        SetState(CubeState::kAmbient);
+        SetState(CubeState::kRecovery);
       }
       break;
     }
@@ -106,6 +106,15 @@ void Cube::Update() {
       uint64_t time_in_climax_state_millis = millis() - state_entered_millis_;
       if (time_in_climax_state_millis > kClimaxDurationMillis) {
         serial::Debug("Leaving climax state.");
+        SetState(CubeState::kRecovery);
+      }
+      break;
+    }
+    case CubeState::kRecovery: {
+      // Check if we need to exit the recovery state.
+      uint64_t time_in_recovery_state_millis = millis() - state_entered_millis_;
+      if (time_in_recovery_state_millis > kRecoveryDurationMillis) {
+        serial::Debug("Leaving recovery state.");
         SetState(CubeState::kAmbient);
       }
       break;
@@ -138,8 +147,9 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
     wall->OnHandReleased();
   }
 
-  if (state_ == CubeState::kGlitched || state_ == CubeState::kClimax) {
-    serial::Debug("Cube is glitched/climaxed, ignoring hand.");
+  if (state_ == CubeState::kGlitched || state_ == CubeState::kClimax ||
+      state_ == CubeState::kRecovery) {
+    serial::Debug("Cube is glitched/climaxed/recovering, ignoring hand.");
     return;
   }
 
@@ -206,6 +216,13 @@ void Cube::SetState(CubeState state) {
       for (Wall& wall : walls_) {
         wall.SetPattern(PatternId::kClimaxPhaseOne, 80, 200);
       }
+      break;
+    }
+    case CubeState::kRecovery: {
+      for (Wall& wall : walls_) {
+        wall.SetPattern(PatternId::kRecovery, 60, 1000);
+      }
+      serial::PlayAmbientSound();
       break;
     }
   }

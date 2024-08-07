@@ -11,6 +11,7 @@ enum class CubeState : uint8_t {
   kAmbient,
   kTouched,
   kGlitched,
+  kRecovery,
   kClimax,
 };
 
@@ -31,6 +32,9 @@ class Cube {
 
   // How long the cube stays in climax mode.
   static constexpr int kClimaxDurationMillis = 10 * 1000;
+
+  // How long the cube stays in recovery mode.
+  static constexpr int kRecoveryDurationMillis = 60 * 1000;
 
   // Registers a wall with the cube.
   Cube& AddWall(Wall wall);

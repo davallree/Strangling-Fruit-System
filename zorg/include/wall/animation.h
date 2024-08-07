@@ -179,6 +179,21 @@ class ClimaxPhaseOnePattern : public Pattern {
   }
 };
 
+class RecoveryPattern : public Pattern {
+ public:
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    uint8_t offset = beatsin8(speed / 2);
+    uint8_t pulse = beatsin8(speed / 2, 128, 255);
+    for (LED& led : buffer.leds()) {
+      uint8_t a = qadd8(led.y(), offset);
+      if (a < 128) a = 128;
+      uint8_t brightness = cos8(a);
+      brightness = scale8_video(brightness, pulse);
+      led.color().setHSV(212, 255, brightness);
+    }
+  }
+};
+
 // Controls the LED matrix.
 class LEDController {
  public:
@@ -224,7 +239,7 @@ class LEDController {
   // TODO: create a struct for that crap.
   PatternId previous_pattern_id_ = PatternId::kNone;
   uint8_t previous_pattern_speed_ = 60;
-  PatternId current_pattern_id_ = PatternId::kClimaxPhaseOne;
+  PatternId current_pattern_id_ = PatternId::kRecovery;
   uint8_t current_pattern_speed_ = 60;
 };
 
