@@ -1,7 +1,8 @@
 class PressedSound {
   speedMultiplier = 0;
 
-  constructor(masterLimiter) {
+  constructor() {
+    this.reverb = new Tone.Reverb(0.5).toDestination();
     this.pressedSynth = new Tone.FMSynth().toDestination();
     this.bassSynth = new Tone.MonoSynth({
       oscillator: { type: "sine" },
@@ -40,6 +41,10 @@ class PressedSound {
     this.acceleratingSynthLoop = new Tone.Loop((time) => {
       this.acceleratingSynth.triggerAttackRelease("C6", "8n", time);
     }, "4n");
+
+    this.pressedSynth.connect(this.reverb);
+    this.bassSynth.connect(this.reverb);
+    this.acceleratingSynth.connect(this.reverb);
   }
 
   play() {
@@ -49,8 +54,9 @@ class PressedSound {
 
     this.chebyshev.wet.value = 0;
     this.acceleratingSynth.detune.value = 0;
-    this.acceleratingSynthLoop.start();
-    Tone.Transport.bpm.exponentialRampTo(800, 14, "+1");
+    // For some reason it's not starting 5s in the future...
+    this.acceleratingSynthLoop.start("+5");
+    Tone.Transport.bpm.exponentialRampTo(800, 10, "+5");
     this.acceleratingSynth.detune.exponentialRampTo(1200, 14, "+1");
     this.chebyshev.wet.rampTo(1, 5, "+10");
   }
@@ -60,7 +66,6 @@ class PressedSound {
     this.lfo.stop();
     this.acceleratingSynthLoop.stop();
     Tone.getTransport().bpm.value = 60;
-    // Nothing to pause.
   }
 }
 
