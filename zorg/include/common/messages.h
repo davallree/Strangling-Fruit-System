@@ -24,10 +24,11 @@ enum PatternId : uint8_t {
   kSpiral,
   kOutWave,
   kRose,
+  kInWave,
   kCircles,
   // Ambient patterns end.
 
-  kInWave,
+  kAwaitTouch,
   kGlitch,
 
   // Climax stuff.

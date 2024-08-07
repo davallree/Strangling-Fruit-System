@@ -178,7 +178,7 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
     if (wall.pressed()) {
       wall.SetPattern(PatternId::kInWave, speed, 200);
     } else {
-      wall.SetPattern(PatternId::kOutWave, speed, 200);
+      wall.SetPattern(PatternId::kAwaitTouch, speed, 200);
     }
   }
   // Play the pressed sound.

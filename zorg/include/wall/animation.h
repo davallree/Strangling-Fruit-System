@@ -137,6 +137,26 @@ class CirclesPattern : public Pattern {
   uint8_t scale_ = 1;
 };
 
+class AwaitTouchPattern : public Pattern {
+ public:
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    uint8_t wave_phase = beatsin8(speed, 32, 64);
+
+    for (LED& led : buffer.leds()) {
+      if (led.radius() < 128) {
+        uint8_t r = 2 * (led.radius() + wave_phase);
+        uint8_t brightness = cos8(r);
+        led.color().setHSV(212, 255, brightness);
+      } else {
+        led.color() = CRGB::Black;
+      }
+    }
+  }
+
+ private:
+  uint8_t scale_ = 1;
+};
+
 class GlitchPattern : public Pattern {
  public:
   void Update(LEDBuffer& buffer, uint8_t speed) override {
