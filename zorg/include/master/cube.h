@@ -24,7 +24,7 @@ class Cube {
   static constexpr uint8_t kAmbientSpeed = 60;
 
   // How long until the cube enters glitch mode.
-  static constexpr int kGlitchTimeoutMillis = 5 * 1000;
+  static constexpr int kGlitchTimeoutMillis = 15 * 1000;
   // How long the cube stays in glitch mode.
   static constexpr int kGlitchDurationMillis = 10 * 1000;
   static constexpr uint8_t kGlitchSpeed = 60;
