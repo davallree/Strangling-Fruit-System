@@ -1,12 +1,15 @@
+import "../Tone.js";
+
 export class PressedSound {
   speedMultiplier = 0;
 
   constructor() {
-    this.pressedSynth = new Tone.FMSynth({ volume: -10 }).toDestination();
+    this.compressor = new Tone.Compressor().toDestination();
+    this.pressedSynth = new Tone.FMSynth({ volume: -10 }).connect(this.compressor);
     this.bassSynth = new Tone.MonoSynth({
       oscillator: { type: "sine" },
       envelope: { attack: 0.001, decay: 0, sustain: 1, release: 10 }
-    }).toDestination();
+    }).connect(this.compressor);
     this.notesForMultiplier = [["C2", "D4"], ["F2", "G4"], ["Bb3", "C5"], ["Eb3", "F5"]];
 
     this.bassOscillator = new Tone.Oscillator({
@@ -14,7 +17,7 @@ export class PressedSound {
       type: "sine",
       volume: -10,
     });
-    this.bassGain = new Tone.Gain(0).toDestination();
+    this.bassGain = new Tone.Gain(0).connect(this.compressor);
     this.bassOscillator.connect(this.bassGain);
 
     this.bassLfo = new Tone.LFO({
@@ -25,7 +28,8 @@ export class PressedSound {
     this.bassLfo.connect(this.bassGain.gain);
 
     // A soft chime sound that accelerates over time and becomes more distorted.
-    this.chebyshev = new Tone.Chebyshev(50).toDestination();
+    this.acceleratingSynthGain = new Tone.Gain(0).connect(this.compressor);
+    this.chebyshev = new Tone.Chebyshev(50).connect(this.acceleratingSynthGain);
     this.acceleratingSynth = new Tone.Synth({
       oscillator: {
         type: 'sine' // Use a sine wave for a soft sound
@@ -56,6 +60,8 @@ export class PressedSound {
     this.bassLfo.start();
 
     // Start the accelerating synth 5 seconds after the start.
+    this.acceleratingSynthGain.gain.value = 0;
+    this.acceleratingSynthGain.gain.rampTo(1, 10, "+5");
     this.chebyshev.wet.value = 0;
     this.acceleratingSynth.detune.value = 0;
     this.acceleratingSynthLoop.start("+5");
