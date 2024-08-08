@@ -1,20 +1,11 @@
 export class GlitchSound {
-  static async create(masterLimiter) {
-    const sound = new GlitchSound(masterLimiter);
-    await sound.load();
-    return sound;
-  }
-
-  constructor(masterLimiter) {
-    this.player = new Tone.Player().connect(masterLimiter);
+  constructor() {
+    this.player = new Tone.Player("./sounds/glitch.mp3").toDestination();
     this.player.loop = true;
   }
 
-  async load() {
-    await this.player.load("./sounds/glitch.mp3");
-  }
-
   play() {
+    Tone.Transport.stop();
     Tone.Transport.start();
     console.log("Playing glitch sound.");
     this.player.start();

@@ -2,28 +2,27 @@ export class PressedSound {
   speedMultiplier = 0;
 
   constructor() {
-    this.reverb = new Tone.Reverb(0.5).toDestination();
-    this.pressedSynth = new Tone.FMSynth().toDestination();
+    this.pressedSynth = new Tone.FMSynth({ volume: -10 }).toDestination();
     this.bassSynth = new Tone.MonoSynth({
       oscillator: { type: "sine" },
       envelope: { attack: 0.001, decay: 0, sustain: 1, release: 10 }
     }).toDestination();
     this.notesForMultiplier = [["C2", "D4"], ["F2", "G4"], ["Bb3", "C5"], ["Eb3", "F5"]];
-    // this.bassOscillator = new Tone.Oscillator("C2", "sine").toDestination();
 
-    this.bassGain = new Tone.Gain(0).toDestination();
     this.bassOscillator = new Tone.Oscillator({
-      frequency: "C1",
-      type: "sine"
-    }).start();
+      frequency: "G2",
+      type: "sine",
+      volume: -10,
+    });
+    this.bassGain = new Tone.Gain(0).toDestination();
     this.bassOscillator.connect(this.bassGain);
 
-    this.lfo = new Tone.LFO({
+    this.bassLfo = new Tone.LFO({
       frequency: this.speedMultiplier,
       min: 0,
       max: 1
-    }).start();
-    this.lfo.connect(this.bassGain.gain);
+    });
+    this.bassLfo.connect(this.bassGain.gain);
 
     // A soft chime sound that accelerates over time and becomes more distorted.
     this.chebyshev = new Tone.Chebyshev(50).toDestination();
@@ -41,18 +40,22 @@ export class PressedSound {
     this.acceleratingSynthLoop = new Tone.Loop((time) => {
       this.acceleratingSynth.triggerAttackRelease("C6", "8n", time);
     }, "4n");
-
-    this.pressedSynth.connect(this.reverb);
-    this.bassSynth.connect(this.reverb);
-    this.acceleratingSynth.connect(this.reverb);
   }
 
   play() {
-    Tone.Transport.bpm.value = 60;
+    Tone.Transport.stop();
     Tone.Transport.start();
+    Tone.Transport.bpm.value = 60;
     this.bassSynth.triggerAttackRelease(this.notesForMultiplier[this.speedMultiplier][0], "8n");
     this.pressedSynth.triggerAttackRelease(this.notesForMultiplier[this.speedMultiplier][1], "8n");
 
+    // Start the bass LFO.
+    this.bassOscillator.start();
+    this.bassGain.gain.linearRampToValueAtTime(1, Tone.now() + 1);
+    this.bassLfo.frequency.value = this.speedMultiplier;
+    this.bassLfo.start();
+
+    // Start the accelerating synth 5 seconds after the start.
     this.chebyshev.wet.value = 0;
     this.acceleratingSynth.detune.value = 0;
     this.acceleratingSynthLoop.start("+5");
@@ -62,8 +65,9 @@ export class PressedSound {
   }
 
   pause() {
+    this.bassOscillator.stop();
     this.bassGain.gain.linearRampToValueAtTime(0, Tone.now() + 1);
-    this.lfo.stop();
+    this.bassLfo.stop();
     this.acceleratingSynthLoop.stop();
     Tone.getTransport().bpm.value = 60;
     Tone.Transport.stop();

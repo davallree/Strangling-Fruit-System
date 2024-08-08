@@ -1,8 +1,9 @@
-import { SerialHandler } from './serial.js';
 import './Tone.js';
+import { SerialHandler } from './serial.js';
 import { AmbientSound } from './sound/ambient.js';
 import { PressedSound } from './sound/pressed.js';
 import { GlitchSound } from './sound/glitch.js';
+import { DullSound } from './sound/dull.js';
 
 class CubeApp {
   serialHandler = new SerialHandler();
@@ -14,10 +15,10 @@ class CubeApp {
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.serialHandler.messageCallback = this.onMessage;
 
-    this.masterLimiter = new Tone.Limiter(-3).toDestination();
-    this.ambientSound = new AmbientSound(this.masterLimiter);
-    this.pressedSound = new PressedSound(this.masterLimiter);
-    this.glitchSound = new GlitchSound(this.masterLimiter);
+    this.ambientSound = new AmbientSound();
+    this.pressedSound = new PressedSound();
+    this.glitchSound = new GlitchSound();
+    this.dullSound = new DullSound();
 
     // Reduce the volume so we don't get clipping.
     Tone.Master.volume.value = -10;
@@ -26,9 +27,8 @@ class CubeApp {
   // Connect to the cube, and start Tone.js.
   connect = async () => {
     await Tone.start();
-    Tone.Transport.start();
-    // Load the glitch sound here.
-    this.glitchSound.load();
+    // Loads the samples.
+    await Tone.loaded();
     try {
       await this.serialHandler.connect();
       console.log('Connected to device');
@@ -79,69 +79,4 @@ class CubeApp {
     this.currentSound.play();
   }
 }
-const app = new CubeApp();
-/*
-let currentState = 'A';
-let stateStartTime = null;
-let glitchTimeout = null;
-
-function transitionToState(newState) {
-  stopCurrentStateSound();
-
-  if (['B', 'C', 'D'].includes(newState)) {
-    stateStartTime = Date.now();
-    glitchTimeout = setTimeout(() => {
-      transitionToState('F');
-    }, 15000); // 15 seconds to transition to glitch
-  } else {
-    stateStartTime = null;
-    if (glitchTimeout) {
-      clearTimeout(glitchTimeout);
-      glitchTimeout = null;
-    }
-  }
-
-  currentState = newState;
-  startStateSound(newState);
-}
-
-function stopCurrentStateSound() {
-  switch (currentState) {
-    case 'A':
-      stopAmbientSound();
-      break;
-    case 'B':
-    case 'C':
-    case 'D':
-    case 'E':
-      // No need to explicitly stop pressed sounds since they are short-lived
-      break;
-    case 'F':
-      // Glitch sound stops automatically after playing
-      break;
-  }
-}
-
-function startStateSound(state) {
-  switch (state) {
-    case 'A':
-      playAmbientSound();
-      break;
-    case 'B':
-      playPressedSound(1);
-      break;
-    case 'C':
-      playPressedSound(2);
-      break;
-    case 'D':
-      playPressedSound(3);
-      break;
-    case 'E':
-      playPressedSound(4);
-      break;
-    case 'F':
-      playGlitchSound();
-      break;
-  }
-}
-*/
+export const app = new CubeApp();
