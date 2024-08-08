@@ -14,6 +14,7 @@ export class ClimaxSound {
     // Bring back the synths from the pressed sound.
     this.pressedSynth = new Tone.PolySynth(Tone.FMSynth, { volume: -10 }).connect(this.compressor);
     this.bassSynth = new Tone.PolySynth(Tone.MonoSynth, {
+      volume: -10,
       oscillator: { type: "sine" },
       envelope: { attack: 0.001, decay: 0, sustain: 1, release: 10 }
     }).connect(this.compressor);
@@ -46,25 +47,32 @@ export class ClimaxSound {
   }
 
   play() {
-    // Play the pressed notes all together.
+    const riseTime = 20;
+    // Play the pressed notes all together for one measure.
     this.pressedSynth.triggerAttackRelease(["D4", "G4", "C5", "F5", "Bb5"], "1m");
     this.bassSynth.triggerAttackRelease(["C2", "F2", "Bb3", "Eb3", "Ab3"], "1m");
-    this.gainEnvelope.gain.value = 0;
-    this.oscillators.forEach(osc => { osc.frequency.value = 100; osc.start(); });
-    const riseTime = 20;
-    // Create an automation for volume rise
-    this.gainEnvelope.gain.rampTo(1, riseTime);
 
-    // Create a frequency rise for each oscillator
-    this.oscillators.forEach((osc, index) => {
-      osc.frequency.linearRampTo(((Math.random() * 1000) + 50), riseTime);
-    });
+    // Reset the oscillators gain to 0.
+    this.gainEnvelope.gain.value = 0;
+    Tone.Transport.stop();
+    Tone.Transport.start();
+    // Start the oscillators 5 seconds after the synths.
+    Tone.Transport.scheduleOnce((time) => {
+      // Reset oscillators and ramp them up.
+      this.oscillators.forEach(osc => {
+        osc.frequency.value = 100;
+        osc.start(time);
+        osc.frequency.linearRampTo(((Math.random() * 1000) + 50), 20, time);
+      });
+      // Create an automation for volume rise.
+      this.gainEnvelope.gain.rampTo(1, riseTime);
+    }, "+1");
 
     // Stop oscillators after the rise
-    setTimeout(() => {
-      this.oscillators.forEach(osc => osc.stop());
+    Tone.Transport.scheduleOnce((time) => {
+      this.oscillators.forEach(osc => osc.stop(time));
       console.log('Oscillators stopped');
-    }, riseTime * 1000);
+    }, `+${riseTime}`);
   }
 
   pause() {

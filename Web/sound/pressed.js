@@ -7,6 +7,7 @@ export class PressedSound {
     this.compressor = new Tone.Compressor().toDestination();
     this.pressedSynth = new Tone.FMSynth({ volume: -10 }).connect(this.compressor);
     this.bassSynth = new Tone.MonoSynth({
+      volume: -10,
       oscillator: { type: "sine" },
       envelope: { attack: 0.001, decay: 0, sustain: 1, release: 10 }
     }).connect(this.compressor);
