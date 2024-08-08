@@ -47,6 +47,13 @@ inline void PlayGlitchSound() {
   SendJson(msg);
 }
 
+inline void PlayClimaxSound() {
+  ArduinoJson::JsonDocument msg;
+  msg[kMethod] = kPlaySoundMethod;
+  msg[kParams][kSoundNameParam] = "climax";
+  SendJson(msg);
+}
+
 inline constexpr char kSoundParamsParam[] = "soundParams";
 inline constexpr char kPressedCountParam[] = "pressedCount";
 inline void PlayPressedSound(uint8_t pressed_count) {
@@ -54,6 +61,14 @@ inline void PlayPressedSound(uint8_t pressed_count) {
   msg[kMethod] = kPlaySoundMethod;
   msg[kParams][kSoundNameParam] = "pressed";
   msg[kParams][kSoundParamsParam][kPressedCountParam] = pressed_count;
+  SendJson(msg);
+}
+
+inline constexpr char kPlayOneShotMethod[] = "playOneShot";
+inline void PlayDullSound() {
+  ArduinoJson::JsonDocument msg;
+  msg[kMethod] = kPlayOneShotMethod;
+  msg[kParams][kSoundNameParam] = "dull";
   SendJson(msg);
 }
 

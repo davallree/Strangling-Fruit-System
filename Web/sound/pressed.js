@@ -68,9 +68,10 @@ export class PressedSound {
     this.bassOscillator.stop();
     this.bassGain.gain.linearRampToValueAtTime(0, Tone.now() + 1);
     this.bassLfo.stop();
-    this.acceleratingSynthLoop.stop();
+    this.acceleratingSynthLoop.cancel();
     Tone.getTransport().bpm.value = 60;
     Tone.Transport.stop();
+    Tone.Transport.cancel();
   }
 }
 

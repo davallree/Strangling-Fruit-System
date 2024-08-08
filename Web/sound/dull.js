@@ -27,7 +27,9 @@ export class DullSound {
           release: 0.1
         }
       }
-    }).toDestination();
+    });
+    this.reverb = new Tone.Reverb({ decay: 1, wet: 0.5 }).toDestination();
+    this.synth.connect(this.reverb);
   }
 
   play() {

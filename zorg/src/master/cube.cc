@@ -168,9 +168,11 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   if (state_ == CubeState::kGlitched || state_ == CubeState::kClimax ||
       state_ == CubeState::kRecovery) {
     serial::Debug("Cube is glitched/climaxed/recovering, ignoring hand.");
+    if (hand_event.type == HandEventType::kPressed) {
+      serial::PlayDullSound();
+    }
     return;
   }
-
   if (NoWallsPressed(walls_)) {
     SetState(CubeState::kAmbient);
     return;
@@ -192,7 +194,9 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
     }
   }
   // Play the pressed sound.
-  serial::PlayPressedSound(num_walls_pressed);
+  if (hand_event.type == HandEventType::kPressed) {
+    serial::PlayPressedSound(num_walls_pressed);
+  }
 }
 
 void Cube::SetState(CubeState state) {
