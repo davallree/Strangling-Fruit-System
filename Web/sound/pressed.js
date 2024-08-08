@@ -10,7 +10,7 @@ export class PressedSound {
       oscillator: { type: "sine" },
       envelope: { attack: 0.001, decay: 0, sustain: 1, release: 10 }
     }).connect(this.compressor);
-    this.notesForMultiplier = [["C2", "D4"], ["F2", "G4"], ["Bb3", "C5"], ["Eb3", "F5"]];
+    this.notesForMultiplier = [["C2", "D4"], ["F2", "G4"], ["Bb3", "C5"], ["Eb3", "F5"], ["Ab3", "Bb5"]];
 
     this.bassOscillator = new Tone.Oscillator({
       frequency: "G2",

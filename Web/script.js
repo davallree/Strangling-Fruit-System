@@ -12,6 +12,14 @@ class CubeApp {
   messagesConsole = document.getElementById('messages');
   currentSound = null;
 
+  ambientButton = document.getElementById('ambient-button');
+  glitchedButton = document.getElementById('glitched-button');
+  climaxButton = document.getElementById('climax-button');
+  pressed1Button = document.getElementById('pressed1-button');
+  pressed2Button = document.getElementById('pressed2-button');
+  pressed3Button = document.getElementById('pressed3-button');
+  pressed4Button = document.getElementById('pressed4-button');
+
   constructor() {
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.serialHandler.messageCallback = this.onMessage;
@@ -24,6 +32,15 @@ class CubeApp {
 
     // Reduce the volume so we don't get clipping.
     Tone.Master.volume.value = -10;
+
+    // Wire up test buttons.
+    this.ambientButton.addEventListener('pointerdown', () => this.playSound('ambient'));
+    this.glitchedButton.addEventListener('pointerdown', () => this.playSound('glitch'));
+    this.climaxButton.addEventListener('pointerdown', () => this.playSound('climax'));
+    this.pressed1Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 1 }));
+    this.pressed2Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 2 }));
+    this.pressed3Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 3 }));
+    this.pressed4Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 4 }));
   }
 
   // Connect to the cube, and start Tone.js.
