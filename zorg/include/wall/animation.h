@@ -4,6 +4,7 @@
 #include <FastLED.h>
 
 #include <memory>
+#include <mutex>
 #include <vector>
 
 #include "common/messages.h"
@@ -227,13 +228,13 @@ class LEDController {
 
   // Sets the current pattern to show on the LED matrix. The transition duration
   // determines how long the pattern will blend with the previous pattern.
+  // Locks excluded: mu_.
   void SetCurrentPattern(PatternId pattern_id, uint8_t pattern_speed,
                          int transition_duration_millis);
 
   // Call from loop().
+  // Locks excluded: mu_.
   void Update();
-
-  std::vector<LED>& leds() { return led_buffer_.leds(); }
 
   // Buffer for FastLED data.
   std::vector<CRGB>& led_data() { return led_buffer_.led_data(); }
@@ -242,6 +243,9 @@ class LEDController {
 
  private:
   void InitBuffers(int num_leds);
+
+  // Protects members from concurrent access.
+  std::mutex mu_;
 
   std::vector<std::unique_ptr<Pattern>> patterns_;
 

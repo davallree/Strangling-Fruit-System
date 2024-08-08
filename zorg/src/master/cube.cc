@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #include <cstdint>
+#include <mutex>
 #include <optional>
 #include <vector>
 
@@ -55,11 +56,13 @@ bool ShouldGlitch(const std::vector<Wall>& walls) {
 }  // namespace
 
 Cube& Cube::AddWall(Wall wall) {
+  std::lock_guard<std::mutex> lock(mu_);
   walls_.push_back(std::move(wall));
   return *this;
 }
 
 void Cube::Connect() {
+  std::lock_guard<std::mutex> lock(mu_);
   for (Wall& wall : walls_) {
     wall.Connect();
   }
@@ -67,6 +70,7 @@ void Cube::Connect() {
 }
 
 void Cube::Update() {
+  std::lock_guard<std::mutex> lock(mu_);
   switch (state_) {
     case CubeState::kAmbient: {
       // Cycle through ambient patterns.
@@ -131,6 +135,7 @@ Wall* Cube::GetWall(MacAddress address) {
 
 void Cube::OnHandEvent(const MacAddress& mac_address,
                        const HandEvent& hand_event) {
+  std::lock_guard<std::mutex> lock(mu_);
   // Get the wall that sent the event.
   Wall* wall = GetWall(mac_address);
   if (wall == nullptr) {

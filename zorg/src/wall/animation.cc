@@ -41,6 +41,7 @@ void LEDController::InitBuffers(int num_leds) {
 void LEDController::SetCurrentPattern(PatternId pattern_id,
                                       uint8_t pattern_speed,
                                       int transition_duration_millis) {
+  std::lock_guard<std::mutex> lock(mu_);
   if (current_pattern_id_ == pattern_id) {
     // Same pattern, just update the speed.
     current_pattern_speed_ = pattern_speed;
@@ -55,6 +56,7 @@ void LEDController::SetCurrentPattern(PatternId pattern_id,
 }
 
 void LEDController::Update() {
+  std::lock_guard<std::mutex> lock(mu_);
   // Call the current pattern.
   Pattern* current_pattern = patterns_[current_pattern_id_].get();
   if (current_pattern == nullptr) {
