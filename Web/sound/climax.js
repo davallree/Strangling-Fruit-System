@@ -2,19 +2,22 @@ import "../Tone.js";
 
 export class ClimaxSound {
   constructor() {
+    // Create a gain envelope to control the rise
+    this.gainEnvelope = new Tone.Gain(0).toDestination();
+
     // Create a group to hold all oscillators
-    this.synthGroup = new Tone.Compressor().toDestination();
+    this.synthGroup = new Tone.Compressor().connect(this.gainEnvelope);
 
     // Create reverb and delay effects
     this.reverb = new Tone.Reverb({
       decay: 4,
       wet: 0.5
-    }).toDestination();
+    }).connect(this.gainEnvelope);
     this.delay = new Tone.FeedbackDelay({
       delayTime: 0.25,
       feedback: 0.6,
       wet: 0.4
-    }).toDestination();
+    }).connect(this.gainEnvelope);
 
     // Connect synth group to effects
     this.synthGroup.connect(this.reverb);
@@ -27,19 +30,16 @@ export class ClimaxSound {
         frequency: 100,
         type: "sawtooth",
         detune: (i - 4) * ((Math.random() * 100) - 50)
-      }).connect(this.synthGroup).start();
+      }).connect(this.synthGroup);
       this.oscillators.push(osc);
     }
-
-    // Create a gain envelope to control the rise
-    this.gainEnvelope = new Tone.Gain(0).toDestination();
-    this.synthGroup.connect(this.gainEnvelope);
   }
 
   play() {
+    this.oscillators.forEach(osc => osc.start());
     const riseTime = 20;
     // Create an automation for volume rise
-    this.gainEnvelope.gain.rampTo(1, Tone.now() + 5);
+    this.gainEnvelope.gain.rampTo(1, riseTime);
 
     // Create a frequency rise for each oscillator
     this.oscillators.forEach((osc, index) => {

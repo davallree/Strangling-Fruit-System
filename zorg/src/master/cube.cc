@@ -230,6 +230,7 @@ void Cube::SetState(CubeState state) {
       for (Wall& wall : walls_) {
         wall.SetPattern(PatternId::kClimaxPhaseOne, 80, 200);
       }
+      serial::PlayClimaxSound();
       break;
     }
     case CubeState::kRecovery: {
