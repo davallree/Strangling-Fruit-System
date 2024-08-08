@@ -1,4 +1,4 @@
-class AmbientSound {
+export class AmbientSound {
   playing = false;
   constructor(masterLimiter) {
     // Ambient sounds setup

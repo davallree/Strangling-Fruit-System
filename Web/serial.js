@@ -19,7 +19,7 @@ class JsonTransformer {
   }
 }
 
-class SerialHandler {
+export class SerialHandler {
   messageCallback = null;
 
   async connect() {

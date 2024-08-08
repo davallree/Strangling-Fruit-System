@@ -1,4 +1,4 @@
-class PressedSound {
+export class PressedSound {
   speedMultiplier = 0;
 
   constructor() {

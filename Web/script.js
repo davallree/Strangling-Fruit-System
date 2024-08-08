@@ -1,3 +1,9 @@
+import { SerialHandler } from './serial.js';
+import './Tone.js';
+import { AmbientSound } from './sound/ambient.js';
+import { PressedSound } from './sound/pressed.js';
+import { GlitchSound } from './sound/glitch.js';
+
 class CubeApp {
   serialHandler = new SerialHandler();
   connectButton = document.getElementById('connect-button');

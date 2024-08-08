@@ -1,4 +1,4 @@
-class GlitchSound {
+export class GlitchSound {
   static async create(masterLimiter) {
     const sound = new GlitchSound(masterLimiter);
     await sound.load();
