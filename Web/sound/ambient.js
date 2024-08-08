@@ -87,7 +87,7 @@ export class AmbientSound {
     const duration = Math.random() * 0.6 + 0.2;
     const note = Tone.Frequency(Math.random() * 12 + 25, "midi").toFrequency();
 
-    this.accentSynth.volume.setValueAtTime(-5, now);
+    // this.accentSynth.volume.setValueAtTime(-5, now);
     this.accentSynth.triggerAttackRelease(note, duration, now);
 
     // Random panning for each accent
@@ -144,7 +144,7 @@ export class AmbientSound {
   }
 
   // Schedule random events with varying intervals
-  scheduleEvents(now) {
+  scheduleEvents() {
     console.log("Scheduling events.");
     const nextPadTime = Math.random() * 10 + 10;
     const nextAccentTime = Math.random() * 5 + 5;
@@ -153,35 +153,36 @@ export class AmbientSound {
 
     Tone.Transport.scheduleOnce((time) => {
       this.playPadChord(time);
-    }, now + nextPadTime);
+    }, `+${nextPadTime}`);
 
     Tone.Transport.scheduleOnce((time) => {
       this.playAccent(time);
-    }, now + nextAccentTime);
+    }, `+${nextAccentTime}`);
 
     Tone.Transport.scheduleOnce((time) => {
       this.updateEffects(time);
-    }, now + nextEffectTime);
+    }, `+${nextEffectTime}`);
 
     Tone.Transport.scheduleOnce((time) => {
       this.toggleBassDrone(time);
-    }, now + nextBassDrone);
+    }, `+${nextBassDrone}`);
 
     Tone.Transport.scheduleOnce((time) => {
       this.scheduleEvents(time);
-    }, now + Math.max(nextPadTime, nextAccentTime, nextEffectTime) + 1);
+    }, `+${Math.max(nextPadTime, nextAccentTime, nextEffectTime) + 1}`);
   }
 
   play() {
     if (this.playing) return;
     this.playing = true;
     // Make sure the transport is started.
+    Tone.Transport.stop();
     Tone.Transport.start();
     // Always start the bass drone and play a single accent note when we begin.
     this.bassDrone.start();
     this.playAccent(Tone.now());
     // Schedule the initial events.
-    this.scheduleEvents(Tone.now());
+    this.scheduleEvents();
     console.log("Ambient Sound is playing");
   }
 
