@@ -49,12 +49,12 @@ class PressedSound {
 
   play() {
     Tone.Transport.bpm.value = 60;
+    Tone.Transport.start();
     this.bassSynth.triggerAttackRelease(this.notesForMultiplier[this.speedMultiplier][0], "8n");
     this.pressedSynth.triggerAttackRelease(this.notesForMultiplier[this.speedMultiplier][1], "8n");
 
     this.chebyshev.wet.value = 0;
     this.acceleratingSynth.detune.value = 0;
-    // For some reason it's not starting 5s in the future...
     this.acceleratingSynthLoop.start("+5");
     Tone.Transport.bpm.exponentialRampTo(800, 10, "+5");
     this.acceleratingSynth.detune.exponentialRampTo(1200, 14, "+1");
@@ -66,6 +66,7 @@ class PressedSound {
     this.lfo.stop();
     this.acceleratingSynthLoop.stop();
     Tone.getTransport().bpm.value = 60;
+    Tone.Transport.stop();
   }
 }
 
