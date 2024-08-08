@@ -46,6 +46,15 @@ uint64_t LatestInteractionTime(const std::vector<Wall>& walls) {
   return latest_interaction_time_;
 }
 
+// Checks whether the cube should climax. The cube climaxes when all the walls
+// are pressed, and the last interaction time is greater than the timeout.
+bool ShouldClimax(const std::vector<Wall>& walls) {
+  if (!WallsAllPressed(walls)) return false;
+  uint64_t latest_interaction_time = LatestInteractionTime(walls);
+  uint64_t elapsed = millis() - latest_interaction_time;
+  return elapsed > Cube::kClimaxHeldDurationMillis;
+}
+
 // Check if the cube should glitch.
 bool ShouldGlitch(const std::vector<Wall>& walls) {
   uint64_t latest_interaction_time = LatestInteractionTime(walls);
@@ -93,6 +102,10 @@ void Cube::Update() {
       if (ShouldGlitch(walls_)) {
         serial::Debug("Timed out, entering glitch state.");
         SetState(CubeState::kGlitched);
+      }
+      if (ShouldClimax(walls_)) {
+        serial::Debug("Entering climax state.");
+        SetState(CubeState::kClimax);
       }
       break;
     }
@@ -155,14 +168,6 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   if (state_ == CubeState::kGlitched || state_ == CubeState::kClimax ||
       state_ == CubeState::kRecovery) {
     serial::Debug("Cube is glitched/climaxed/recovering, ignoring hand.");
-    return;
-  }
-
-  // Check if we need to enter climax state.
-  if (WallsAllPressed(walls_)) {
-    serial::Debug("Entering climax state.");
-    // Set the cube and all the walls to climax state.
-    SetState(CubeState::kClimax);
     return;
   }
 

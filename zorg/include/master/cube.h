@@ -22,6 +22,7 @@ class Cube {
   // How long each ambient pattern plays for.
   static constexpr int kAmbientCycleMillis = 60 * 1000;
 
+  // How long the transition is between ambient patterns.
   static constexpr int kAmbientTransitionMillis = 1 * 1000;
   static constexpr uint8_t kAmbientSpeed = 60;
 
@@ -31,6 +32,8 @@ class Cube {
   static constexpr int kGlitchDurationMillis = 10 * 1000;
   static constexpr uint8_t kGlitchSpeed = 60;
 
+  // How long all hands need to be held for the cube to enter climax mode.
+  static constexpr int kClimaxHeldDurationMillis = 2 * 1000;
   // How long the cube stays in climax mode.
   static constexpr int kClimaxDurationMillis = 10 * 1000;
 
