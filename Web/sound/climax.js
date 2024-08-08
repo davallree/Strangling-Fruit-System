@@ -36,7 +36,8 @@ export class ClimaxSound {
   }
 
   play() {
-    this.oscillators.forEach(osc => osc.start());
+    this.gainEnvelope.gain.value = 0;
+    this.oscillators.forEach(osc => { osc.frequency.value = 100; osc.start(); });
     const riseTime = 20;
     // Create an automation for volume rise
     this.gainEnvelope.gain.rampTo(1, riseTime);
