@@ -11,6 +11,8 @@ class CubeApp {
   serialHandler = new SerialHandler();
   connectButton = document.getElementById('connect-button');
 
+  masterStatusIndicator = document.getElementById('master-status');
+
   restartMasterButton = document.getElementById('restart-master-button');
   restartWall1Button = document.getElementById('restart-wall1-button');
   restartWall2Button = document.getElementById('restart-wall2-button');
@@ -34,6 +36,7 @@ class CubeApp {
   meter = new Tone.Meter();
 
   constructor() {
+    this.setMasterConnected(false);
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.restartMasterButton.addEventListener('pointerdown', this.sendRestartMasterMessage);
     this.restartWall1Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(0));
@@ -70,6 +73,14 @@ class CubeApp {
     this.updateMeter();
   }
 
+  setMasterConnected = (connected) => {
+    if (connected) {
+      this.masterStatusIndicator.style.backgroundColor = 'green';
+    } else {
+      this.masterStatusIndicator.style.backgroundColor = 'red';
+    }
+  }
+
   updateMeter = () => {
     const level = this.meter.getValue();
     const normalizedLevel = Tone.dbToGain(level);
@@ -86,6 +97,8 @@ class CubeApp {
     try {
       await this.serialHandler.connect();
       console.log('Connected to device');
+      this.setMasterConnected(true);
+      await this.serialHandler.read();
     } catch (error) {
       console.error('Failed to connect to device:', error);
     }
@@ -102,6 +115,9 @@ class CubeApp {
         break;
       case 'playOneShot':
         this.playOneShot(msg.params.soundName, msg.params.soundParams);
+        break;
+      case 'updateStatus':
+        this.updateStatus(msg.params);
         break;
       default:
         console.error('unknown method: ', msg.method);
@@ -155,8 +171,14 @@ class CubeApp {
   sendRestartMasterMessage = async () => {
     await this.serialHandler.send('restartMaster', []);
   }
+
   sendRestartWallMessage = async (wallId) => {
     await this.serialHandler.send('restartWall', { 'wallId': wallId })
   }
+
+  updateStatus = (params) => {
+
+  }
+
 }
 export const app = new CubeApp();

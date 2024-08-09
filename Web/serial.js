@@ -23,26 +23,28 @@ export class SerialHandler {
   messageCallback = null;
 
   async connect() {
-    const port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 115200 });  // Ensure baud rate matches the ESP32 settings
+    this.port = await navigator.serial.requestPort();
+    await this.port.open({ baudRate: 115200 });  // Ensure baud rate matches the ESP32 settings
 
     const decoder = new TextDecoderStream();
-    port.readable.pipeTo(decoder.writable);
-    const inputStream = decoder.readable
+    this.port.readable.pipeTo(decoder.writable);
+    this.inputStream = decoder.readable
       .pipeThrough(new TransformStream(new LineBreakTransformer()))
       .pipeThrough(new TransformStream(new JsonTransformer()));
-    const reader = inputStream.getReader();
+    this.reader = this.inputStream.getReader();
 
     this.encoder = new TextEncoderStream();
-    this.encoder.readable.pipeTo(port.writable);
+    this.encoder.readable.pipeTo(this.port.writable);
     this.writer = this.encoder.writable.getWriter();
+  }
 
+  async read() {
     while (true) {
       try {
-        const { value, done } = await reader.read();
+        const { value, done } = await this.reader.read();
         if (done) {
           console.log('[readLoop] DONE', done);
-          reader.releaseLock();
+          this.reader.releaseLock();
           break;
         }
         if (value && this.messageCallback) {
