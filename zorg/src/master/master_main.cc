@@ -69,9 +69,17 @@ void loop() {
     const std::string& method = doc[kMethod];
     const ArduinoJson::JsonObject& params = doc[kParams];
     serial::Debug("Received message: %s", method.c_str());
-    if (method == "restart") {
+    if (method == "restartMaster") {
       serial::Debug("Restarting...");
       ESP.restart();
+    } else if (method == "restartWall") {
+      // Forward the message to the wall.
+      int wall_id = params["wallId"];
+      serial::Debug("wall id: %d", wall_id);
+      Wall* wall = cube.GetWall(wall_id);
+      if (wall != nullptr) {
+        wall->SendRestartCommand();
+      }
     }
   }
   cube.Update();

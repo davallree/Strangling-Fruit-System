@@ -70,6 +70,14 @@ Cube& Cube::AddWall(Wall wall) {
   return *this;
 }
 
+Wall* Cube::GetWall(int wall_id) {
+  std::lock_guard<std::mutex> lock(mu_);
+  if (wall_id >= walls_.size()) {
+    return nullptr;
+  }
+  return &walls_[wall_id];
+}
+
 void Cube::Connect() {
   std::lock_guard<std::mutex> lock(mu_);
   for (Wall& wall : walls_) {

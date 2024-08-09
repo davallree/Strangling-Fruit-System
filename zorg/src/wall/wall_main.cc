@@ -46,7 +46,7 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
   // Parse message.
   ArduinoJson::JsonDocument doc;
   ArduinoJson::deserializeJson(doc, data, data_len);
-  if (doc[kMethod] == "setPattern") {
+  if (doc[kMethod] == SetPatternCommand::kMethodName) {
     SetPatternCommand command = SetPatternCommand::FromJsonCommand(doc);
     Serial.printf(
         "Received command, switching to id=%d, speed=%d, transition=%d\n",
@@ -54,6 +54,8 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
         command.transition_duration_millis);
     controller.SetCurrentPattern(command.pattern_id, command.pattern_speed,
                                  command.transition_duration_millis);
+  } else if (doc[kMethod] == kRestartMethod) {
+    ESP.restart();
   }
 }
 

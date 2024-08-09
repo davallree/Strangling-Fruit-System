@@ -44,6 +44,10 @@ class Cube {
   // Locks excluded: mu_.
   Cube& AddWall(Wall wall);
 
+  // Returns nullptr if ID invalid.
+  // Locks excluded: mu_.
+  Wall* GetWall(int wall_id);
+
   // Connects to all the wall MCUs.
   // Locks excluded: mu_.
   void Connect();

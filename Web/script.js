@@ -10,7 +10,13 @@ import { BrandySound } from './sound/brandy.js';
 class CubeApp {
   serialHandler = new SerialHandler();
   connectButton = document.getElementById('connect-button');
-  restartButton = document.getElementById('restart-button');
+
+  restartMasterButton = document.getElementById('restart-master-button');
+  restartWall1Button = document.getElementById('restart-wall1-button');
+  restartWall2Button = document.getElementById('restart-wall2-button');
+  restartWall3Button = document.getElementById('restart-wall3-button');
+  restartWall4Button = document.getElementById('restart-wall4-button');
+
   messagesConsole = document.getElementById('messages');
   currentSound = null;
 
@@ -29,7 +35,11 @@ class CubeApp {
 
   constructor() {
     this.connectButton.addEventListener('pointerdown', this.connect);
-    this.restartButton.addEventListener('pointerdown', this.sendRestartMessage);
+    this.restartMasterButton.addEventListener('pointerdown', this.sendRestartMasterMessage);
+    this.restartWall1Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(0));
+    this.restartWall2Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(1));
+    this.restartWall3Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(2));
+    this.restartWall4Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(3));
     this.serialHandler.messageCallback = this.onMessage;
 
     this.ambientSound = new AmbientSound();
@@ -142,8 +152,11 @@ class CubeApp {
     }
   }
 
-  sendRestartMessage = async () => {
-    await this.serialHandler.send('restart', []);
+  sendRestartMasterMessage = async () => {
+    await this.serialHandler.send('restartMaster', []);
+  }
+  sendRestartWallMessage = async (wallId) => {
+    await this.serialHandler.send('restartWall', { 'wallId': wallId })
   }
 }
 export const app = new CubeApp();

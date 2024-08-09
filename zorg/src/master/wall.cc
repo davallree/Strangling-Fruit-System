@@ -26,15 +26,13 @@ void Wall::SetPattern(PatternId pattern_id, uint8_t pattern_speed,
 }
 
 void Wall::SendSetPatternCommand(const SetPatternCommand& command) const {
-  ArduinoJson::JsonDocument doc = command.ToJsonCommand();
-  std::string out;
-  ArduinoJson::serializeJson(doc, out);
-  esp_err_t result = esp_now_send(address_.data(),
-                                  reinterpret_cast<const uint8_t*>(out.c_str()),
-                                  out.size() + 1);
-  if (result != ESP_OK) {
-    serial::Debug("Error sending the message");
-  }
+  Send(command.ToJsonCommand());
+}
+
+void Wall::SendRestartCommand() const {
+  ArduinoJson::JsonDocument doc;
+  doc[kMethod] = kRestartMethod;
+  Send(doc);
 }
 
 void Wall::OnHandPressed() {
@@ -45,4 +43,15 @@ void Wall::OnHandPressed() {
 void Wall::OnHandReleased() {
   pressed_ = false;
   last_interaction_time_millis_ = millis();
+}
+
+void Wall::Send(const ArduinoJson::JsonDocument& doc) const {
+  std::string out;
+  ArduinoJson::serializeJson(doc, out);
+  esp_err_t result = esp_now_send(address_.data(),
+                                  reinterpret_cast<const uint8_t*>(out.c_str()),
+                                  out.size() + 1);
+  if (result != ESP_OK) {
+    serial::Debug("Error sending the message");
+  }
 }

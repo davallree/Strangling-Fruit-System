@@ -1,6 +1,7 @@
 #ifndef INCLUDE_MASTER_WALL_H_
 #define INCLUDE_MASTER_WALL_H_
 
+#include <ArduinoJson.hpp>
 #include <cstdint>
 
 #include "common/common.h"
@@ -37,8 +38,11 @@ class Wall {
 
   // Send a command to the wall MCU.
   void SendSetPatternCommand(const SetPatternCommand& command) const;
+  void SendRestartCommand() const;
 
  private:
+  void Send(const ArduinoJson::JsonDocument& doc) const;
+
   // MAC address of the wall being controlled.
   MacAddress address_;
 
