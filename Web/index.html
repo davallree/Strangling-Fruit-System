@@ -6,6 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Art Installation</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        #meter {
+            width: 300px;
+            height: 25px;
+            background-color: #ccc;
+            position: relative;
+            border-radius: 5px;
+        }
+
+        #meter-level {
+            height: 100%;
+            background-color: #76c7c0;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 
 <body>
@@ -16,6 +31,9 @@
     <div id="messages"></div>
     <h2>Sound tests</h2>
     <div>
+        <div id="meter">
+            <div id="meter-level"></div>
+        </div>
         <label>Ambient: </label><button id="ambient-button">Play</button>
         <label>Glitched: </label><button id="glitched-button">Play</button>
         <label>Climax: </label><button id="climax-button">Play</button>

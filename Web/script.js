@@ -20,6 +20,8 @@ class CubeApp {
   pressed3Button = document.getElementById('pressed3-button');
   pressed4Button = document.getElementById('pressed4-button');
 
+  meter = new Tone.Meter();
+
   constructor() {
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.serialHandler.messageCallback = this.onMessage;
@@ -41,6 +43,17 @@ class CubeApp {
     this.pressed2Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 2 }));
     this.pressed3Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 3 }));
     this.pressed4Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 4 }));
+
+    Tone.getDestination().connect(this.meter);
+    this.updateMeter();
+  }
+
+  updateMeter = () => {
+    const level = this.meter.getValue();
+    const normalizedLevel = Tone.dbToGain(level);
+    const meterElement = document.getElementById('meter-level');
+    meterElement.style.width = Math.min(normalizedLevel * 100, 100) + "%";
+    requestAnimationFrame(this.updateMeter);
   }
 
   // Connect to the cube, and start Tone.js.
