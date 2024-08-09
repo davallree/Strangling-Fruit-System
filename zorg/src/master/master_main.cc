@@ -66,8 +66,8 @@ void loop() {
     // Parse the incoming JSON message.
     ArduinoJson::JsonDocument doc;
     ArduinoJson::deserializeJson(doc, Serial);
-    const std::string& method = doc[serial::kMethod];
-    const ArduinoJson::JsonObject& params = doc[serial::kParams];
+    const std::string& method = doc[kMethod];
+    const ArduinoJson::JsonObject& params = doc[kParams];
     serial::Debug("Received message: %s", method.c_str());
     if (method == "restart") {
       serial::Debug("Restarting...");

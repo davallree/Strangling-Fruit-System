@@ -7,10 +7,6 @@
 #include <mutex>
 
 namespace serial {
-// Top level keys for the JSON messages.
-inline constexpr char kMethod[] = "method";
-inline constexpr char kParams[] = "params";
-
 // Method names.
 inline constexpr char kDebugMethod[] = "debug";
 inline constexpr char kPlaySoundMethod[] = "playSound";

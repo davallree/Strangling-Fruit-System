@@ -1,5 +1,7 @@
 #include "master/serial.h"
 
+#include "common/messages.h"
+
 namespace serial {
 namespace {
 

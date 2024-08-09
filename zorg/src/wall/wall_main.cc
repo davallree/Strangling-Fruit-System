@@ -9,6 +9,7 @@
 #include <WiFi.h>
 #include <esp_now.h>
 
+#include <ArduinoJson.hpp>
 #include <vector>
 
 #include "common/common.h"
@@ -37,23 +38,23 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
                     int data_len) {
   // Debug incoming data.
   Serial.println("Received packet:");
-  for (int i = 0; i < data_len; i++) {
-    Serial.printf("%#x ", data[i]);
-  }
-  Serial.println();
+  Serial.printf("%s\n", data);
 
   // We assume any message we get is from the master.
   master_address = MacAddressFromArray(mac_addr);
 
   // Parse message.
-  SetPatternCommand command;
-  memcpy(&command, data, sizeof(command));
-  Serial.printf(
-      "Received command, switching to id=%d, speed=%d, transition=%d\n",
-      command.pattern_id, command.pattern_speed,
-      command.transition_duration_millis);
-  controller.SetCurrentPattern(command.pattern_id, command.pattern_speed,
-                               command.transition_duration_millis);
+  ArduinoJson::JsonDocument doc;
+  ArduinoJson::deserializeJson(doc, data, data_len);
+  if (doc[kMethod] == "setPattern") {
+    SetPatternCommand command = SetPatternCommand::FromJsonCommand(doc);
+    Serial.printf(
+        "Received command, switching to id=%d, speed=%d, transition=%d\n",
+        command.pattern_id, command.pattern_speed,
+        command.transition_duration_millis);
+    controller.SetCurrentPattern(command.pattern_id, command.pattern_speed,
+                                 command.transition_duration_millis);
+  }
 }
 
 void SendHandEvent(const HandEvent &event) {
