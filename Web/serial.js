@@ -33,6 +33,10 @@ export class SerialHandler {
       .pipeThrough(new TransformStream(new JsonTransformer()));
     const reader = inputStream.getReader();
 
+    this.encoder = new TextEncoderStream();
+    this.encoder.readable.pipeTo(port.writable);
+    this.writer = this.encoder.writable.getWriter();
+
     while (true) {
       try {
         const { value, done } = await reader.read();
@@ -49,5 +53,11 @@ export class SerialHandler {
         break;
       }
     }
+  }
+
+  async send(method, params) {
+    const message = JSON.stringify({ method, params });
+    console.log('Sending message: ', message);
+    await this.writer.write(message);
   }
 }

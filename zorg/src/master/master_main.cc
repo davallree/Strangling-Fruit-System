@@ -60,4 +60,19 @@ void setup() {
   cube.Connect();
 }
 
-void loop() { cube.Update(); }
+void loop() {
+  // Check if the Serial has any data to read.
+  if (Serial.available() > 0) {
+    // Parse the incoming JSON message.
+    ArduinoJson::JsonDocument doc;
+    ArduinoJson::deserializeJson(doc, Serial);
+    const std::string& method = doc[serial::kMethod];
+    const ArduinoJson::JsonObject& params = doc[serial::kParams];
+    serial::Debug("Received message: %s", method.c_str());
+    if (method == "restart") {
+      serial::Debug("Restarting...");
+      ESP.restart();
+    }
+  }
+  cube.Update();
+}

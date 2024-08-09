@@ -10,6 +10,7 @@ import { BrandySound } from './sound/brandy.js';
 class CubeApp {
   serialHandler = new SerialHandler();
   connectButton = document.getElementById('connect-button');
+  restartButton = document.getElementById('restart-button');
   messagesConsole = document.getElementById('messages');
   currentSound = null;
 
@@ -22,10 +23,13 @@ class CubeApp {
   pressed4Button = document.getElementById('pressed4-button');
   brandyButton = document.getElementById('brandy-button');
 
+  testMessageButton = document.getElementById('test-message-button');
+
   meter = new Tone.Meter();
 
   constructor() {
     this.connectButton.addEventListener('pointerdown', this.connect);
+    this.restartButton.addEventListener('pointerdown', this.sendRestartMessage);
     this.serialHandler.messageCallback = this.onMessage;
 
     this.ambientSound = new AmbientSound();
@@ -47,6 +51,10 @@ class CubeApp {
     this.pressed3Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 3 }));
     this.pressed4Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 4 }));
     this.brandyButton.addEventListener('pointerdown', () => this.playOneShot('brandy'));
+
+    this.testMessageButton.addEventListener('pointerdown', async () => {
+      await this.serialHandler.send('debug', ['Test message']);
+    });
 
     Tone.getDestination().connect(this.meter);
     this.updateMeter();
@@ -132,6 +140,10 @@ class CubeApp {
         this.brandySound.play();
         break;
     }
+  }
+
+  sendRestartMessage = async () => {
+    await this.serialHandler.send('restart', []);
   }
 }
 export const app = new CubeApp();
