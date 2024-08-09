@@ -98,8 +98,8 @@ void setup() {
   controller.InitLEDs(kNumLeds, coordsX, coordsY, angles, radii);
 #ifdef ACTUAL_WALL
   FastLED
-      .addLeds<WS2811, 5>(controller.led_data().data(),
-                          controller.led_data().size())
+      .addLeds<WS2811, 5, BRG>(controller.led_data().data(),
+                               controller.led_data().size())
       .setCorrection(TypicalLEDStrip);
 #else
   FastLED
