@@ -5,7 +5,7 @@ export class ClimaxSound {
     // Compressor to keep levels in check.
     this.compressor = new Tone.Compressor().toDestination();
 
-    // Create a gain envelope to control the rise
+    // Create a gain envelope to control the synth volume rise.
     this.gainEnvelope = new Tone.Gain(0).connect(this.compressor);
 
     // Create a group to hold all oscillators
@@ -47,26 +47,46 @@ export class ClimaxSound {
   }
 
   play() {
-    const riseTime = 20;
+    // Start the transport from the beginning.
+    Tone.Transport.start(Tone.now(), "0:0:0");
+    // Set the BPM.
+    Tone.Transport.bpm.value = 80;
+
     // Play the pressed notes all together for one measure.
-    this.pressedSynth.triggerAttackRelease(["D4", "G4", "C5", "F5", "Bb5"], "1m");
-    this.bassSynth.triggerAttackRelease(["C2", "F2", "Bb3", "Eb3", "Ab3"], "1m");
+    const seq = new Tone.Sequence((time, note) => {
+      this.pressedSynth.triggerAttack(note, time);
+    }, ["G4", "C5", "F5", "Bb5"], "16n");
+    seq.loop = false;
+    seq.start("0:0:0");
+
+    const bassSeq = new Tone.Sequence((time, note) => {
+      this.bassSynth.triggerAttack(note, time);
+    }, ["F2", "Bb3", "Eb3", "Ab3"], "16n");
+    bassSeq.loop = false;
+    bassSeq.start("0:0:0");
+
+    // Release halfways through the second measure.
+    Tone.Transport.scheduleOnce((time) => {
+      this.pressedSynth.releaseAll(time);
+      this.bassSynth.releaseAll(time);
+    }, "1:2:0");
 
     // Reset the oscillators gain to 0.
     this.gainEnvelope.gain.value = 0;
-    Tone.Transport.stop();
-    Tone.Transport.start();
-    // Start the oscillators 5 seconds after the synths.
+    const riseTime = 20;
+    // Start the oscillators at the second measure.
     Tone.Transport.scheduleOnce((time) => {
       // Reset oscillators and ramp them up.
       this.oscillators.forEach(osc => {
+        // Start the oscillator at 100Hz and ramp it up to a random frequency.
+        // (Each oscillator is detuned by a random amount.)
         osc.frequency.value = 100;
         osc.start(time);
-        osc.frequency.linearRampTo(((Math.random() * 1000) + 50), 20, time);
+        osc.frequency.linearRampTo(((Math.random() * 1000) + 50), riseTime, time);
       });
       // Create an automation for volume rise.
       this.gainEnvelope.gain.rampTo(1, riseTime);
-    }, "+1");
+    }, "1:0:0");
 
     // Stop oscillators after the rise
     Tone.Transport.scheduleOnce((time) => {
@@ -76,6 +96,11 @@ export class ClimaxSound {
   }
 
   pause() {
+    // Stop transport and remove all events.
+    Tone.Transport.stop().cancel();
+    // Silence the synths and oscillators.
+    this.pressedSynth.releaseAll();
+    this.bassSynth.releaseAll();
     this.oscillators.forEach(osc => osc.stop());
   }
 }
