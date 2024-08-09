@@ -6,6 +6,8 @@
 #include <ArduinoJson.hpp>
 #include <mutex>
 
+#include "master/cube.h"
+
 namespace serial {
 // Method names.
 inline constexpr char kDebugMethod[] = "debug";
@@ -34,6 +36,9 @@ void PlayPressedSound(uint8_t pressed_count);
 
 // Play the dull sound when hands are disabled.
 void PlayDullSound();
+
+void UpdateStatus(const Cube& cube);
+
 }  // namespace serial
 
 #endif  // INCLUDE_MASTER_SERIAL_H_

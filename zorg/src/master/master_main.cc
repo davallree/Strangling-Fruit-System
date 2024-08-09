@@ -13,13 +13,20 @@
 #include "master/serial.h"
 #include "master/wall.h"
 
+Cube cube;
+
 void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
-  if (status != ESP_NOW_SEND_SUCCESS) {
+  // Parse the address and event.
+  MacAddress address = MacAddressFromArray(mac_addr);
+  Wall* wall = cube.GetWall(address);
+  if (wall == nullptr) return;
+  if (status == ESP_NOW_SEND_SUCCESS) {
+    wall->set_last_delivery_status(DeliveryStatus::kSuccess);
+  } else {
+    wall->set_last_delivery_status(DeliveryStatus::kFailure);
     serial::Debug("Failed to send data.");
   }
 }
-
-Cube cube;
 
 void OnDataReceived(const uint8_t* raw_addr, const uint8_t* data,
                     int data_len) {
@@ -60,6 +67,9 @@ void setup() {
   cube.Connect();
 }
 
+uint64_t last_update_time_millis = 0;
+int update_delay_millis = 1000;
+
 void loop() {
   // Check if the Serial has any data to read.
   if (Serial.available() > 0) {
@@ -83,4 +93,9 @@ void loop() {
     }
   }
   cube.Update();
+
+  if ((millis() - last_update_time_millis) > update_delay_millis) {
+    last_update_time_millis = millis();
+    serial::UpdateStatus(cube);
+  }
 }

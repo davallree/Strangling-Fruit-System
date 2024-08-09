@@ -41,15 +41,18 @@ class Cube {
   static constexpr int kRecoveryDurationMillis = 60 * 1000;
 
   // Registers a wall with the cube.
-  // Locks excluded: mu_.
   Cube& AddWall(Wall wall);
 
   // Returns nullptr if ID invalid.
-  // Locks excluded: mu_.
   Wall* GetWall(int wall_id);
 
+  // Returns the wall with the given MAC adddress, or nullptr if there is no
+  // wall with that MAC address.
+  Wall* GetWall(MacAddress address);
+
+  const std::vector<Wall>& walls() const { return walls_; }
+
   // Connects to all the wall MCUs.
-  // Locks excluded: mu_.
   void Connect();
 
   // Call in loop() to update the state of the cube.
@@ -62,10 +65,6 @@ class Cube {
 
  private:
   void SetState(CubeState state);
-
-  // Returns the wall with the given MAC adddress, or nullptr if there is no
-  // wall with that MAC address.
-  Wall* GetWall(MacAddress address);
 
   // Protects members from concurrent access.
   std::mutex mu_;

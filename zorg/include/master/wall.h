@@ -7,6 +7,12 @@
 #include "common/common.h"
 #include "common/messages.h"
 
+enum class DeliveryStatus {
+  kUnknown,
+  kSuccess,
+  kFailure,
+};
+
 // The Wall class tracks the state of a given wall. Each wall can communicate to
 // the wall MCU in order to change the currently playing animation.
 class Wall {
@@ -21,6 +27,11 @@ class Wall {
   const MacAddress& address() const { return address_; }
 
   bool pressed() const { return pressed_; }
+
+  DeliveryStatus last_delivery_status() const { return last_delivery_status_; }
+  void set_last_delivery_status(DeliveryStatus status) {
+    last_delivery_status_ = status;
+  }
 
   // Last time a wall was pressed or released.
   uint64_t last_interaction_time_millis() const {
@@ -42,6 +53,7 @@ class Wall {
 
  private:
   void Send(const ArduinoJson::JsonDocument& doc) const;
+  DeliveryStatus last_delivery_status_;
 
   // MAC address of the wall being controlled.
   MacAddress address_;

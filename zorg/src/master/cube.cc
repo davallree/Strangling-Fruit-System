@@ -65,13 +65,11 @@ bool ShouldGlitch(const std::vector<Wall>& walls) {
 }  // namespace
 
 Cube& Cube::AddWall(Wall wall) {
-  std::lock_guard<std::mutex> lock(mu_);
   walls_.push_back(std::move(wall));
   return *this;
 }
 
 Wall* Cube::GetWall(int wall_id) {
-  std::lock_guard<std::mutex> lock(mu_);
   if (wall_id >= walls_.size()) {
     return nullptr;
   }
@@ -79,7 +77,6 @@ Wall* Cube::GetWall(int wall_id) {
 }
 
 void Cube::Connect() {
-  std::lock_guard<std::mutex> lock(mu_);
   for (Wall& wall : walls_) {
     wall.Connect();
   }

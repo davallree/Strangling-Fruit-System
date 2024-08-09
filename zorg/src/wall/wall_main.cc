@@ -6,6 +6,7 @@
 // The wall controller forwards events about the state of the hand.
 #include <Arduino.h>
 #include <FastLED.h>
+#include <Preferences.h>
 #include <WiFi.h>
 #include <esp_now.h>
 
@@ -26,6 +27,8 @@ constexpr uint8_t kHandPin = BUTTON;
 bool hand_pressed = false;
 
 LEDController controller;
+
+Preferences prefs;
 
 void OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
   // Debug outgoing data.
@@ -112,6 +115,8 @@ void setup() {
 #endif
   FastLED.setBrightness(10);
   FastLED.setMaxRefreshRate(60, true);
+
+  prefs.begin("wall_prefs");
 }
 
 void animate() {

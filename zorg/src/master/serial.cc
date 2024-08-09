@@ -1,6 +1,7 @@
 #include "master/serial.h"
 
 #include "common/messages.h"
+#include "master/cube.h"
 
 namespace serial {
 namespace {
@@ -60,6 +61,27 @@ void PlayDullSound() {
   ArduinoJson::JsonDocument msg;
   msg[kMethod] = kPlayOneShotMethod;
   msg[kParams][kSoundNameParam] = "dull";
+  SendJson(msg);
+}
+
+void UpdateStatus(const Cube& cube) {
+  ArduinoJson::JsonDocument msg;
+  msg[kMethod] = "updateStatus";
+  for (const Wall& wall : cube.walls()) {
+    ArduinoJson::JsonDocument wall_status;
+    wall_status["address"] = MacAddressToString(wall.address());
+    switch (wall.last_delivery_status()) {
+      case DeliveryStatus::kSuccess:
+        wall_status["lastDeliveryStatus"] = "success";
+        break;
+      case DeliveryStatus::kFailure:
+        wall_status["lastDeliveryStatus"] = "failure";
+        break;
+      default:
+        wall_status["lastDeliveryStatus"] = "unknown";
+    }
+    msg[kParams]["walls"].add(wall_status);
+  }
   SendJson(msg);
 }
 

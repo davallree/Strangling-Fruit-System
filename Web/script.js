@@ -37,6 +37,15 @@ class CubeApp {
 
   constructor() {
     this.setMasterConnected(false);
+    this.wallStatusIndicators = [
+      document.getElementById('wall1-status'),
+      document.getElementById('wall2-status'),
+      document.getElementById('wall3-status'),
+      document.getElementById('wall4-status'),
+    ]
+    for (let i = 0; i < 4; i++) {
+      this.setWallStatus(i, { lastDeliveryStatus: "unknown" });
+    }
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.restartMasterButton.addEventListener('pointerdown', this.sendRestartMasterMessage);
     this.restartWall1Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(0));
@@ -78,6 +87,17 @@ class CubeApp {
       this.masterStatusIndicator.style.backgroundColor = 'green';
     } else {
       this.masterStatusIndicator.style.backgroundColor = 'red';
+    }
+  }
+
+  setWallStatus = (id, status) => {
+    const indicator = this.wallStatusIndicators[id];
+    if (status.lastDeliveryStatus === "success") {
+      indicator.style.backgroundColor = 'green';
+    } else if (status.lastDeliveryStatus === "failure") {
+      indicator.style.backgroundColor = 'red';
+    } else {
+      indicator.style.backgroundColor = 'yellow';
     }
   }
 
@@ -177,7 +197,9 @@ class CubeApp {
   }
 
   updateStatus = (params) => {
-
+    params.walls.forEach((status, index) => {
+      this.setWallStatus(index, status);
+    });
   }
 
 }
