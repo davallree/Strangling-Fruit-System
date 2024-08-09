@@ -7,71 +7,37 @@
 #include <mutex>
 
 namespace serial {
+// Top level keys for the JSON messages.
 inline constexpr char kMethod[] = "method";
 inline constexpr char kParams[] = "params";
-inline std::mutex serial_mutex;
 
-inline void SendJson(const ArduinoJson::JsonDocument& doc) {
-  std::lock_guard<std::mutex> lock(serial_mutex);
-  ArduinoJson::serializeJson(doc, Serial);
-  Serial.println();
-}
-
+// Method names.
 inline constexpr char kDebugMethod[] = "debug";
-inline void Debug(const char* format, ...) {
-  char buffer[256];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(buffer, sizeof(buffer), format, args);
-  va_end(args);
-
-  ArduinoJson::JsonDocument msg;
-  msg[kMethod] = kDebugMethod;
-  msg[kParams][0] = buffer;
-  SendJson(msg);
-}
-
 inline constexpr char kPlaySoundMethod[] = "playSound";
+inline constexpr char kPlayOneShotMethod[] = "playOneShot";
+
+// Parameters.
 inline constexpr char kSoundNameParam[] = "soundName";
-inline void PlayAmbientSound() {
-  ArduinoJson::JsonDocument msg;
-  msg[kMethod] = kPlaySoundMethod;
-  msg[kParams][kSoundNameParam] = "ambient";
-  SendJson(msg);
-}
-
-inline void PlayGlitchSound() {
-  ArduinoJson::JsonDocument msg;
-  msg[kMethod] = kPlaySoundMethod;
-  msg[kParams][kSoundNameParam] = "glitch";
-  SendJson(msg);
-}
-
-inline void PlayClimaxSound() {
-  ArduinoJson::JsonDocument msg;
-  msg[kMethod] = kPlaySoundMethod;
-  msg[kParams][kSoundNameParam] = "climax";
-  SendJson(msg);
-}
-
 inline constexpr char kSoundParamsParam[] = "soundParams";
 inline constexpr char kPressedCountParam[] = "pressedCount";
-inline void PlayPressedSound(uint8_t pressed_count) {
-  ArduinoJson::JsonDocument msg;
-  msg[kMethod] = kPlaySoundMethod;
-  msg[kParams][kSoundNameParam] = "pressed";
-  msg[kParams][kSoundParamsParam][kPressedCountParam] = pressed_count;
-  SendJson(msg);
-}
 
-inline constexpr char kPlayOneShotMethod[] = "playOneShot";
-inline void PlayDullSound() {
-  ArduinoJson::JsonDocument msg;
-  msg[kMethod] = kPlayOneShotMethod;
-  msg[kParams][kSoundNameParam] = "dull";
-  SendJson(msg);
-}
+// Send a debug message to the PC.
+void Debug(const char* format, ...);
 
+// Play the ambient sound.
+void PlayAmbientSound();
+
+// Play the glitch sound.
+void PlayGlitchSound();
+
+// Play the climax sound.
+void PlayClimaxSound();
+
+// Play the pressed sound for the given number of pressed hands.
+void PlayPressedSound(uint8_t pressed_count);
+
+// Play the dull sound when hands are disabled.
+void PlayDullSound();
 }  // namespace serial
 
 #endif  // INCLUDE_MASTER_SERIAL_H_
