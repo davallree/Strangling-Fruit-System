@@ -48,7 +48,7 @@ export class ClimaxSound {
 
   play() {
     // Start the transport from the beginning.
-    Tone.Transport.start(Tone.now(), "0:0:0");
+    Tone.Transport.stop().start();
     // Set the BPM.
     Tone.Transport.bpm.value = 80;
 
