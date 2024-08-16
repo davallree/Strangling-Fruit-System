@@ -24,7 +24,9 @@ MacAddress master_address;
 
 // Whether the hand is currently pressed or not.
 constexpr uint8_t kHandPin = T0;
-const uint16_t touch_threshold = 35;
+constexpr char kTouchThresholdKey[] = "touch_threshold";
+constexpr uint16_t kDefaultTouchThreshold = 35;
+uint16_t touch_threshold = kDefaultTouchThreshold;
 bool hand_pressed = false;
 
 LEDController controller;
@@ -118,6 +120,13 @@ void setup() {
   FastLED.setMaxRefreshRate(60, true);
 
   prefs.begin("wall_prefs");
+  // Check if the touch threshold is already set, if not set it.
+  if (prefs.isKey(kTouchThresholdKey)) {
+    Serial.println("Touch threshold already set.");
+  } else {
+    Serial.println("Touch threshold unset.");
+  }
+  touch_threshold = prefs.getUShort(kTouchThresholdKey, kDefaultTouchThreshold);
 }
 
 void animate() {
@@ -131,9 +140,9 @@ void loop() {
   }
   animate();
 
-    // Read the touch value
+  // Read the touch value
   uint16_t touch_value = touchRead(kHandPin);
-  
+
   // Detect touch or release based on the threshold
   if (touch_value < touch_threshold) {  // Touch detected
     if (!hand_pressed) {
