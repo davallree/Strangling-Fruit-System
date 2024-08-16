@@ -10,6 +10,9 @@ inline constexpr char kParams[] = "params";
 
 inline constexpr char kRestartMethod[] = "restart";
 
+inline constexpr char kSetTouchThresholdMethod[] = "setTouchThreshold";
+inline constexpr char kTouchThresholdParam[] = "touchThreshold";
+
 // The type of hand event.
 enum class HandEventType : uint8_t {
   // Sent when the hand has been pressed.

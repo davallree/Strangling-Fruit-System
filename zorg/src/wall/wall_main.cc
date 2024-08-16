@@ -62,6 +62,11 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
                                  command.transition_duration_millis);
   } else if (doc[kMethod] == kRestartMethod) {
     ESP.restart();
+  } else if (doc[kMethod] == kSetTouchThresholdMethod) {
+    uint16_t new_touch_threshold = doc[kParams][kTouchThresholdParam];
+    Serial.printf("Setting new touch threshold: %d\n", new_touch_threshold);
+    prefs.putUShort(kTouchThresholdKey, new_touch_threshold);
+    touch_threshold = new_touch_threshold;
   }
 }
 
