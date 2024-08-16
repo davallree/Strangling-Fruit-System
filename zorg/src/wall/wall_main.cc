@@ -120,11 +120,12 @@ void setup() {
   FastLED.setMaxRefreshRate(60, true);
 
   prefs.begin("wall_prefs");
-  // Check if the touch threshold is already set, if not set it.
   if (prefs.isKey(kTouchThresholdKey)) {
-    Serial.println("Touch threshold already set.");
+    Serial.printf("Touch threshold already set: %d\n",
+                  prefs.getUShort(kTouchThresholdKey));
   } else {
-    Serial.println("Touch threshold unset.");
+    Serial.printf("Touch threshold unset, using default: %d\n",
+                  kDefaultTouchThreshold);
   }
   touch_threshold = prefs.getUShort(kTouchThresholdKey, kDefaultTouchThreshold);
 }
