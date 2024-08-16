@@ -35,6 +35,13 @@ void Wall::SendRestartCommand() const {
   Send(doc);
 }
 
+void Wall::SendSetTouchThresholdCommand(uint16_t threshold) const {
+  ArduinoJson::JsonDocument doc;
+  doc[kMethod] = kSetTouchThresholdMethod;
+  doc[kParams][kTouchThresholdParam] = threshold;
+  Send(doc);
+}
+
 void Wall::OnHandPressed() {
   pressed_ = true;
   last_interaction_time_millis_ = millis();

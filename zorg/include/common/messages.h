@@ -8,6 +8,8 @@
 inline constexpr char kMethod[] = "method";
 inline constexpr char kParams[] = "params";
 
+inline constexpr char kWallIdParam[] = "wallId";
+
 inline constexpr char kRestartMethod[] = "restart";
 
 inline constexpr char kSetTouchThresholdMethod[] = "setTouchThreshold";

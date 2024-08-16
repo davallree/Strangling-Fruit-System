@@ -85,11 +85,17 @@ void loop() {
       ESP.restart();
     } else if (method == "restartWall") {
       // Forward the message to the wall.
-      int wall_id = params["wallId"];
-      serial::Debug("wall id: %d", wall_id);
+      int wall_id = params[kWallIdParam];
       Wall* wall = cube.GetWall(wall_id);
       if (wall != nullptr) {
         wall->SendRestartCommand();
+      }
+    } else if (method == kSetTouchThresholdMethod) {
+      // Forward the message to the wall.
+      int wall_id = params[kWallIdParam];
+      Wall* wall = cube.GetWall(wall_id);
+      if (wall != nullptr) {
+        wall->SendSetTouchThresholdCommand();
       }
     }
   }

@@ -50,6 +50,7 @@ class Wall {
   // Send a command to the wall MCU.
   void SendSetPatternCommand(const SetPatternCommand& command) const;
   void SendRestartCommand() const;
+  void SendSetTouchThresholdCommand(uint16_t touch_threshold) const;
 
  private:
   void Send(const ArduinoJson::JsonDocument& doc) const;
