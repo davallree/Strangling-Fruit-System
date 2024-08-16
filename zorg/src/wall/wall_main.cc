@@ -23,7 +23,8 @@
 MacAddress master_address;
 
 // Whether the hand is currently pressed or not.
-constexpr uint8_t kHandPin = BUTTON;
+constexpr uint8_t kHandPin = T0;
+const uint16_t touch_threshold = 35;
 bool hand_pressed = false;
 
 LEDController controller;
@@ -129,13 +130,18 @@ void loop() {
     Serial.printf("Current pattern: %d\n", controller.current_pattern_id());
   }
   animate();
-  if (digitalRead(kHandPin) == LOW) {
+
+    // Read the touch value
+  uint16_t touch_value = touchRead(kHandPin);
+  
+  // Detect touch or release based on the threshold
+  if (touch_value < touch_threshold) {  // Touch detected
     if (!hand_pressed) {
       Serial.println("Button pressed!");
       SendHandEvent(HandEvent{.type = HandEventType::kPressed});
       hand_pressed = true;
     }
-  } else {
+  } else {  // No touch detected
     if (hand_pressed) {
       Serial.println("Button released!");
       SendHandEvent(HandEvent{.type = HandEventType::kReleased});
