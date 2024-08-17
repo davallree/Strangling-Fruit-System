@@ -50,6 +50,13 @@ class CubeApp {
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.restartMasterButton.addEventListener('pointerdown', this.sendRestartMasterMessage);
 
+    document.getElementById('set-normal')
+      .addEventListener('pointerdown', () => this.sendSetCubeModeMessage('normal'));
+    document.getElementById('set-man-burn')
+      .addEventListener('pointerdown', () => this.sendSetCubeModeMessage('manBurn'));
+    document.getElementById('set-temple-burn')
+      .addEventListener('pointerdown', () => this.sendSetCubeModeMessage('templeBurn'));
+
     this.serialHandler.messageCallback = this.onMessage;
 
     this.ambientSound = new AmbientSound();
@@ -198,6 +205,10 @@ class CubeApp {
     const touchThreshold = document.getElementById(`threshold-wall${wallId}-input`).value;
     await this.serialHandler.send(
       'setTouchThreshold', { 'wallId': wallId, 'touchThreshold': touchThreshold });
+  }
+
+  sendSetCubeModeMessage = async (cubeMode) => {
+    await this.serialHandler.send('setCubeMode', { 'cubeMode': cubeMode })
   }
 
   updateStatus = (params) => {
