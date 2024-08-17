@@ -183,6 +183,13 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
     }
     return;
   }
+
+  if (state_ == CubeState::kManBurn || state_ == CubeState::kTempleBurn) {
+    serial::Debug("Cube is in man burn/temple burn mode, ignoring hand.");
+    // Don't play a dull sound for those modes.
+    return;
+  }
+
   if (NoWallsPressed(walls_)) {
     SetState(CubeState::kAmbient);
     return;
