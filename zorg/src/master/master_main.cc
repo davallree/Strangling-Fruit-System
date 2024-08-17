@@ -95,7 +95,7 @@ void loop() {
       int wall_id = params[kWallIdParam];
       Wall* wall = cube.GetWall(wall_id);
       if (wall != nullptr) {
-        wall->SendSetTouchThresholdCommand();
+        wall->SendSetTouchThresholdCommand(params[kTouchThresholdParam]);
       }
     }
   }
