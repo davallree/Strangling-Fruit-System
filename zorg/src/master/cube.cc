@@ -141,6 +141,11 @@ void Cube::Update() {
       }
       break;
     }
+    case CubeState::kManBurn:
+    case CubeState::kTempleBurn: {
+      // TODO: implement.
+      break;
+    }
   }
 }
 
@@ -204,6 +209,10 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   }
 }
 
+void Cube::SetNormalMode() { SetState(CubeState::kAmbient); }
+void Cube::SetManBurnMode() { SetState(CubeState::kManBurn); }
+void Cube::SetTempleBurnMode() { SetState(CubeState::kTempleBurn); }
+
 void Cube::SetState(CubeState state) {
   if (state_ == state) return;
   state_ = state;
@@ -243,6 +252,11 @@ void Cube::SetState(CubeState state) {
         wall.SetPattern(PatternId::kRecovery, 60, 1000);
       }
       serial::PlayAmbientSound();
+      break;
+    }
+    case CubeState::kManBurn:
+    case CubeState::kTempleBurn: {
+      // TODO: implement.
       break;
     }
   }

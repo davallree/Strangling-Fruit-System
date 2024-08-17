@@ -97,6 +97,15 @@ void loop() {
       if (wall != nullptr) {
         wall->SendSetTouchThresholdCommand(params[kTouchThresholdParam]);
       }
+    } else if (method == kSetCubeModeMethod) {
+      const std::string& mode = params[kCubeModeParam];
+      if (mode == kNormalMode) {
+        cube.SetNormalMode();
+      } else if (mode == kManBurnMode) {
+        cube.SetManBurnMode();
+      } else if (mode == kTempleBurnMode) {
+        cube.SetTempleBurnMode();
+      }
     }
   }
   cube.Update();

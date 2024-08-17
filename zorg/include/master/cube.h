@@ -14,6 +14,10 @@ enum class CubeState : uint8_t {
   kGlitched,
   kRecovery,
   kClimax,
+
+  // Special modes, set by PC.
+  kManBurn,
+  kTempleBurn,
 };
 
 // This class manages the state of the cube.
@@ -62,6 +66,10 @@ class Cube {
   // Process a hand event from the given MAC address.
   // Locks excluded: mu_.
   void OnHandEvent(const MacAddress& mac_address, const HandEvent& hand_event);
+
+  void SetNormalMode();
+  void SetManBurnMode();
+  void SetTempleBurnMode();
 
  private:
   void SetState(CubeState state);
