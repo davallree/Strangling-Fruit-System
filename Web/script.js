@@ -8,16 +8,14 @@ import { ClimaxSound } from './sound/climax.js';
 import { BrandySound } from './sound/brandy.js';
 
 class CubeApp {
+  numWalls = 4;
+
   serialHandler = new SerialHandler();
   connectButton = document.getElementById('connect-button');
 
   masterStatusIndicator = document.getElementById('master-status');
 
   restartMasterButton = document.getElementById('restart-master-button');
-  restartWall1Button = document.getElementById('restart-wall1-button');
-  restartWall2Button = document.getElementById('restart-wall2-button');
-  restartWall3Button = document.getElementById('restart-wall3-button');
-  restartWall4Button = document.getElementById('restart-wall4-button');
 
   messagesConsole = document.getElementById('messages');
   currentSound = null;
@@ -37,21 +35,20 @@ class CubeApp {
 
   constructor() {
     this.setMasterConnected(false);
-    this.wallStatusIndicators = [
-      document.getElementById('wall1-status'),
-      document.getElementById('wall2-status'),
-      document.getElementById('wall3-status'),
-      document.getElementById('wall4-status'),
-    ]
-    for (let i = 0; i < 4; i++) {
+    this.wallStatusIndicators = Array.from({ length: this.numWalls }, (_, i) =>
+      document.getElementById(`wall${i}-status`)
+    );
+    this.wallAddresses = Array.from({ length: this.numWalls }, (_, i) =>
+      document.getElementById(`wall${i}-address`)
+    );
+    for (let i = 0; i < this.numWalls; i++) {
+      document.getElementById(`restart-wall${i}-button`)
+        .addEventListener('pointerdown', () => this.sendRestartWallMessage(i));
       this.setWallStatus(i, { lastDeliveryStatus: "unknown" });
     }
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.restartMasterButton.addEventListener('pointerdown', this.sendRestartMasterMessage);
-    this.restartWall1Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(0));
-    this.restartWall2Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(1));
-    this.restartWall3Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(2));
-    this.restartWall4Button.addEventListener('pointerdown', () => this.sendRestartWallMessage(3));
+
     this.serialHandler.messageCallback = this.onMessage;
 
     this.ambientSound = new AmbientSound();
@@ -199,6 +196,7 @@ class CubeApp {
   updateStatus = (params) => {
     params.walls.forEach((status, index) => {
       this.setWallStatus(index, status);
+      this.wallAddresses[index].textContent = status.address;
     });
   }
 
