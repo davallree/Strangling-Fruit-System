@@ -21,6 +21,11 @@ inline constexpr char kNormalMode[] = "normal";
 inline constexpr char kManBurnMode[] = "manBurn";
 inline constexpr char kTempleBurnMode[] = "templeBurn";
 
+inline constexpr char kSetHandStateMethod[] = "setHandState";
+inline constexpr char kHandStateParam[] = "handState";
+inline constexpr char kPressed[] = "pressed";
+inline constexpr char kReleased[] = "released";
+
 // The type of hand event.
 enum class HandEventType : uint8_t {
   // Sent when the hand has been pressed.

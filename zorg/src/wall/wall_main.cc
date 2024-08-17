@@ -84,13 +84,19 @@ void SendHandEvent(const HandEvent &event) {
   }
 
   // Send the event.
-  esp_err_t result =
-      esp_now_send(master_address.data(),
-                   reinterpret_cast<const uint8_t *>(&event), sizeof(event));
-
-  if (result == ESP_OK) {
-    Serial.println("Message sent successfully");
+  ArduinoJson::JsonDocument doc;
+  doc[kMethod] = kSetHandStateMethod;
+  if (event.type == HandEventType::kPressed) {
+    doc[kParams][kHandStateParam] = kPressed;
   } else {
+    doc[kParams][kHandStateParam] = kReleased;
+  }
+  std::string out;
+  ArduinoJson::serializeJson(doc, out);
+  esp_err_t result = esp_now_send(
+      master_address.data(), reinterpret_cast<const uint8_t *>(out.c_str()),
+      out.size() + 1);
+  if (result != ESP_OK) {
     Serial.println("Error sending the message");
   }
 }

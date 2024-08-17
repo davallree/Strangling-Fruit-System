@@ -30,13 +30,24 @@ void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status) {
 
 void OnDataReceived(const uint8_t* raw_addr, const uint8_t* data,
                     int data_len) {
-  // Parse the address and event.
   MacAddress address = MacAddressFromArray(raw_addr);
-  HandEvent event;
-  memcpy(&event, data, sizeof(event));
 
-  // Let the cube handle the event.
-  cube.OnHandEvent(address, event);
+  // Parse message.
+  ArduinoJson::JsonDocument doc;
+  ArduinoJson::deserializeJson(doc, data, data_len);
+  const ArduinoJson::JsonObject& params = doc[kParams];
+  if (doc[kMethod] == kSetHandStateMethod) {
+    const std::string& hand_state = params[kHandStateParam];
+    HandEvent event;
+    if (hand_state == kPressed) {
+      event.type = HandEventType::kPressed;
+    } else if (hand_state == kReleased) {
+      event.type = HandEventType::kReleased;
+    }
+
+    // Let the cube handle the event.
+    cube.OnHandEvent(address, event);
+  }
 }
 
 void setup() {
