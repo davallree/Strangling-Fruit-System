@@ -44,6 +44,7 @@ class CubeApp {
     for (let i = 0; i < this.numWalls; i++) {
       document.getElementById(`restart-wall${i}-button`)
         .addEventListener('pointerdown', () => this.sendRestartWallMessage(i));
+      document.getElementById(`set-threshold-wall${i}`).addEventListener('pointerdown', () => this.sendSetTouchThresholdMessage(i));
       this.setWallStatus(i, { lastDeliveryStatus: "unknown" });
     }
     this.connectButton.addEventListener('pointerdown', this.connect);
@@ -191,6 +192,12 @@ class CubeApp {
 
   sendRestartWallMessage = async (wallId) => {
     await this.serialHandler.send('restartWall', { 'wallId': wallId })
+  }
+
+  sendSetTouchThresholdMessage = async (wallId) => {
+    const touchThreshold = document.getElementById(`threshold-wall${wallId}-input`).value;
+    await this.serialHandler.send(
+      'setTouchThreshold', { 'wallId': wallId, 'touchThreshold': touchThreshold });
   }
 
   updateStatus = (params) => {
