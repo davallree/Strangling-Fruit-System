@@ -25,9 +25,12 @@ MacAddress master_address;
 // Whether the hand is currently pressed or not.
 constexpr uint8_t kHandPin = T0;
 constexpr char kTouchThresholdKey[] = "touch_threshold";
-constexpr uint16_t kDefaultTouchThreshold = 35;
+constexpr uint16_t kDefaultTouchThreshold = 18;
 uint16_t touch_threshold = kDefaultTouchThreshold;
 bool hand_pressed = false;
+bool calibrated = false;
+uint16_t calibration_step = 0;
+constexpr uint16_t kCalibrationLimit = 20;
 
 LEDController controller;
 
@@ -139,6 +142,7 @@ void setup() {
                   kDefaultTouchThreshold);
   }
   touch_threshold = prefs.getUShort(kTouchThresholdKey, kDefaultTouchThreshold);
+  touch_threshold = touchRead(kHandPin);
 }
 
 void animate() {
@@ -146,27 +150,45 @@ void animate() {
   FastLED.show();
 }
 
+void calibrate() {
+  if (!calibrated) {
+    calibration_step++;
+
+    // Read the touch value
+    uint16_t touch_value = touchRead(kHandPin);
+    
+    touch_threshold = ((touch_threshold * (calibration_step - 1)) + touch_value) / calibration_step;
+    if (calibration_step == kCalibrationLimit) {
+      calibrated = true;
+    }
+  }
+}
+
 void loop() {
   EVERY_N_SECONDS(1) {
+    calibrate();
+
     Serial.printf("Current pattern: %d\n", controller.current_pattern_id());
+
+    // Read the touch value
+    uint16_t touch_value = touchRead(kHandPin);
+
+    // Detect touch or release based on the threshold
+    if (calibrated && touch_value < static_cast<uint16_t>(touch_threshold * 0.9)) {  // Touch detected
+      if (!hand_pressed) {
+        Serial.println("Button pressed!");
+        SendHandEvent(HandEvent{.type = HandEventType::kPressed});
+        hand_pressed = true;
+      }
+    } else {  // No touch detected
+      if (hand_pressed) {
+        Serial.println("Button released!");
+        SendHandEvent(HandEvent{.type = HandEventType::kReleased});
+        hand_pressed = false;
+      }
+    }
   }
   animate();
 
-  // Read the touch value
-  uint16_t touch_value = touchRead(kHandPin);
-
-  // Detect touch or release based on the threshold
-  if (touch_value < touch_threshold) {  // Touch detected
-    if (!hand_pressed) {
-      Serial.println("Button pressed!");
-      SendHandEvent(HandEvent{.type = HandEventType::kPressed});
-      hand_pressed = true;
-    }
-  } else {  // No touch detected
-    if (hand_pressed) {
-      Serial.println("Button released!");
-      SendHandEvent(HandEvent{.type = HandEventType::kReleased});
-      hand_pressed = false;
-    }
-  }
+  
 }
