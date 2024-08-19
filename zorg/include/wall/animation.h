@@ -190,12 +190,26 @@ class GlitchPattern : public Pattern {
   uint64_t next_glitch_time_millis_ = 0;
 };
 
-class ClimaxPhaseOnePattern : public Pattern {
+class ClimaxPattern : public Pattern {
  public:
   void Update(LEDBuffer& buffer, uint8_t speed) override {
-    uint8_t offset = beatsin8(speed);
+    uint8_t rotation = beat8(speed);
+    uint8_t wave_phase = beatsin8(speed, 0, 255);
+
     for (LED& led : buffer.leds()) {
-      led.color().setHSV(212, 255, qadd8(qsub8(led.y(), 100), offset));
+      uint8_t angle_offset = led.angle() + rotation;
+      uint8_t distance_factor = sin8(led.radius() + wave_phase);
+
+      // Choose between two colors based on distance_factor
+      if (distance_factor > 128) {
+        led.color().setHSV(160, 255, distance_factor);  // Deep blue
+      } else {
+        led.color().setHSV(0, 0, distance_factor);  // White
+      }
+
+      // Add a motion effect by adjusting brightness based on angle
+      uint8_t brightness = scale8(cos8(angle_offset), distance_factor);
+      led.color().nscale8(brightness);
     }
   }
 };

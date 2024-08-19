@@ -17,8 +17,7 @@ LEDController::LEDController() {
       std::make_unique<WavePattern>(WavePattern::Direction::kOut);
   patterns_[PatternId::kAwaitTouch] = std::make_unique<AwaitTouchPattern>();
   patterns_[PatternId::kGlitch] = std::make_unique<GlitchPattern>();
-  patterns_[PatternId::kClimaxPhaseOne] =
-      std::make_unique<ClimaxPhaseOnePattern>();
+  patterns_[PatternId::kClimax] = std::make_unique<ClimaxPattern>();
   patterns_[PatternId::kRecovery] = std::make_unique<RecoveryPattern>();
 }
 

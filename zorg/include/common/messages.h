@@ -55,7 +55,7 @@ enum PatternId : uint8_t {
   kGlitch,
 
   // Climax stuff.
-  kClimaxPhaseOne,
+  kClimax,
 
   kRecovery,
   kNumPatternIds,
