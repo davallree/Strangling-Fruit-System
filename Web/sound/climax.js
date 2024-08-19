@@ -44,6 +44,14 @@ export class ClimaxSound {
       }).connect(this.synthGroup);
       this.oscillators.push(osc);
     }
+
+    // Brandy sounds.
+    this.players = [];
+    // Iterate through the files in sounds/Brandy and add them to the players.
+    for (let i = 1; i <= 27; i++) {
+      const player = new Tone.Player(`../sounds/Brandy/Brandy-${i}.mp3`).toDestination();
+      this.players.push(player);
+    }
   }
 
   play() {
@@ -95,6 +103,12 @@ export class ClimaxSound {
       this.oscillators.forEach(osc => osc.stop(time));
       console.log('Oscillators stopped');
     }, `+${riseTime}`);
+
+    // Play a random Brandy clip after the rise.
+    Tone.Transport.scheduleOnce((time) => {
+      const soundIndex = Math.floor(Math.random() * 27) + 1;
+      this.players[soundIndex].start(time + Tone.Time("1m"));
+    }, `${riseTime}`);
   }
 
   pause() {

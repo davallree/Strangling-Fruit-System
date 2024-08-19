@@ -5,7 +5,6 @@ import { PressedSound } from './sound/pressed.js';
 import { GlitchSound } from './sound/glitch.js';
 import { DullSound } from './sound/dull.js';
 import { ClimaxSound } from './sound/climax.js';
-import { BrandySound } from './sound/brandy.js';
 
 class CubeApp {
   numWalls = 4;
@@ -27,7 +26,6 @@ class CubeApp {
   pressed2Button = document.getElementById('pressed2-button');
   pressed3Button = document.getElementById('pressed3-button');
   pressed4Button = document.getElementById('pressed4-button');
-  brandyButton = document.getElementById('brandy-button');
 
   testMessageButton = document.getElementById('test-message-button');
 
@@ -64,7 +62,6 @@ class CubeApp {
     this.glitchSound = new GlitchSound();
     this.dullSound = new DullSound();
     this.climaxSound = new ClimaxSound();
-    this.brandySound = new BrandySound();
 
     // Reduce the volume so we don't get clipping.
     Tone.Master.volume.value = -10;
@@ -77,7 +74,6 @@ class CubeApp {
     this.pressed2Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 2 }));
     this.pressed3Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 3 }));
     this.pressed4Button.addEventListener('pointerdown', () => this.playSound('pressed', { pressedCount: 4 }));
-    this.brandyButton.addEventListener('pointerdown', () => this.playOneShot('brandy'));
 
     this.testMessageButton.addEventListener('pointerdown', async () => {
       await this.serialHandler.send('debug', ['Test message']);
@@ -186,9 +182,6 @@ class CubeApp {
     switch (soundName) {
       case 'dull':
         this.dullSound.play();
-        break;
-      case 'brandy':
-        this.brandySound.play();
         break;
     }
   }
