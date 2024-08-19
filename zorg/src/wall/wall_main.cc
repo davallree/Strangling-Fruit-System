@@ -146,6 +146,10 @@ void animate() {
   FastLED.show();
 }
 
+constexpr uint64_t kDebounceDelayMillis = 50;
+uint64_t last_debounce_time_millis = 0;
+bool last_hand_pressed_state = false;
+
 void loop() {
   EVERY_N_SECONDS(1) {
     Serial.printf("Current pattern: %d\n", controller.current_pattern_id());
@@ -155,18 +159,23 @@ void loop() {
   // Read the touch value
   uint16_t touch_value = touchRead(kHandPin);
 
-  // Detect touch or release based on the threshold
-  if (touch_value < touch_threshold) {  // Touch detected
-    if (!hand_pressed) {
-      Serial.println("Button pressed!");
-      SendHandEvent(HandEvent{.type = HandEventType::kPressed});
-      hand_pressed = true;
-    }
-  } else {  // No touch detected
-    if (hand_pressed) {
-      Serial.println("Button released!");
-      SendHandEvent(HandEvent{.type = HandEventType::kReleased});
-      hand_pressed = false;
+  bool current_hand_pressed_state = touch_value < touch_threshold;
+
+  if (current_hand_pressed_state != last_hand_pressed_state) {
+    last_debounce_time_millis = millis();
+  }
+
+  if ((millis() - last_debounce_time_millis) > kDebounceDelayMillis) {
+    if (current_hand_pressed_state != hand_pressed) {
+      hand_pressed = current_hand_pressed_state;
+      if (hand_pressed) {
+        Serial.println("Button pressed!");
+        SendHandEvent(HandEvent{.type = HandEventType::kPressed});
+      } else {
+        Serial.println("Button released!");
+        SendHandEvent(HandEvent{.type = HandEventType::kReleased});
+      }
     }
   }
+  last_hand_pressed_state = current_hand_pressed_state;
 }
