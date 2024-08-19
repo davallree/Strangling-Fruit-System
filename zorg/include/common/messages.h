@@ -25,6 +25,8 @@ inline constexpr char kSetHandStateMethod[] = "setHandState";
 inline constexpr char kHandStateParam[] = "handState";
 inline constexpr char kPressed[] = "pressed";
 inline constexpr char kReleased[] = "released";
+inline constexpr char kStatus[] = "status";
+inline constexpr char kTouchValueParam[] = "touchValue";
 
 // The type of hand event.
 enum class HandEventType : uint8_t {
@@ -32,12 +34,16 @@ enum class HandEventType : uint8_t {
   kPressed,
   // Sent when the hand was released.
   kReleased
+  // Sent as a status event.
+  kStatus
 };
 
 // A hand event, sent from the wall controllers to the master controller.
 struct HandEvent {
   // Whether the hand was pressed or released.
   HandEventType type;
+  uint16_t threshold;
+  uint16_t value;
 };
 
 enum PatternId : uint8_t {

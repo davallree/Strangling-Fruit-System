@@ -43,7 +43,11 @@ void OnDataReceived(const uint8_t* raw_addr, const uint8_t* data,
       event.type = HandEventType::kPressed;
     } else if (hand_state == kReleased) {
       event.type = HandEventType::kReleased;
+    } else {
+      event.type = HandEventType::kStatus;
     }
+    event.threshold = params[kTouchThresholdParam];
+    event.value = params[kTouchValueParam];
 
     // Let the cube handle the event.
     cube.OnHandEvent(address, event);

@@ -70,7 +70,7 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
   }
 }
 
-void SendHandEvent(const HandEvent &event) {
+void SendHandEvent(const HandEvent &event, uint16_t touch_value) {
   // Skip sending if we are not paired with the master yet.
   if (master_address == EmptyMacAddress()) {
     Serial.println("Can't send event, no master paired.");
@@ -86,11 +86,14 @@ void SendHandEvent(const HandEvent &event) {
   // Send the event.
   ArduinoJson::JsonDocument doc;
   doc[kMethod] = kSetHandStateMethod;
+  doc[kParams][kTouchThresholdParam] = touch_threshold;
+  doc[kParams][kTouchValueParam] = touch_value;
   if (event.type == HandEventType::kPressed) {
     doc[kParams][kHandStateParam] = kPressed;
   } else {
     doc[kParams][kHandStateParam] = kReleased;
   }
+
   std::string out;
   ArduinoJson::serializeJson(doc, out);
   esp_err_t result = esp_now_send(
@@ -151,13 +154,14 @@ uint64_t last_debounce_time_millis = 0;
 bool last_hand_pressed_state = false;
 
 void loop() {
-  EVERY_N_SECONDS(1) {
-    Serial.printf("Current pattern: %d\n", controller.current_pattern_id());
-  }
-  animate();
-
   // Read the touch value
   uint16_t touch_value = touchRead(kHandPin);
+
+  EVERY_N_SECONDS(1) {
+    Serial.printf("Current pattern: %d\n", controller.current_pattern_id());
+    SendHandEvent(HandEvent{.type = HandEventType::kStatus, .value = touch_value});
+  }
+  animate();
 
   bool current_hand_pressed_state = touch_value < touch_threshold;
 
@@ -170,10 +174,10 @@ void loop() {
       hand_pressed = current_hand_pressed_state;
       if (hand_pressed) {
         Serial.println("Button pressed!");
-        SendHandEvent(HandEvent{.type = HandEventType::kPressed});
+        SendHandEvent(HandEvent{.type = HandEventType::kPressed, .value = touch_value});
       } else {
         Serial.println("Button released!");
-        SendHandEvent(HandEvent{.type = HandEventType::kReleased});
+        SendHandEvent(HandEvent{.type = HandEventType::kReleased, .value = touch_value});
       }
     }
   }

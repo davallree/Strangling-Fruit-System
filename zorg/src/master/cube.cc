@@ -165,6 +165,8 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
     serial::Debug("Unknown wall.");
   }
 
+  serial::Debug("Wall event [threshold: %s, value: %s]", hand_event.threshold, hand_event.value);
+  
   // Set the state for that wall and update its pattern.
   // TODO: use the number of pressed/unpressed walls to influence the patterns
   // playing.
