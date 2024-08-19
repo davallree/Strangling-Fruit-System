@@ -39,7 +39,7 @@ class Cube {
   // How long all hands need to be held for the cube to enter climax mode.
   static constexpr int kClimaxHeldDurationMillis = 2 * 1000;
   // How long the cube stays in climax mode.
-  static constexpr int kClimaxDurationMillis = 10 * 1000;
+  static constexpr int kClimaxDurationMillis = 60 * 1000;
 
   // How long the cube stays in recovery mode.
   static constexpr int kRecoveryDurationMillis = 60 * 1000;
