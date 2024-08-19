@@ -47,6 +47,8 @@ export class ClimaxSound {
   }
 
   play() {
+    // Reset oscillators.
+    this.oscillators.forEach(osc => osc.frequency.value = 100);
     // Start the transport from the beginning.
     Tone.Transport.stop().start();
     // Set the BPM.

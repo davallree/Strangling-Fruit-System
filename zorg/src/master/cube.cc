@@ -178,7 +178,9 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
   if (state_ == CubeState::kGlitched || state_ == CubeState::kClimax ||
       state_ == CubeState::kRecovery) {
     serial::Debug("Cube is glitched/climaxed/recovering, ignoring hand.");
-    if (hand_event.type == HandEventType::kPressed) {
+    if (hand_event.type == HandEventType::kPressed &&
+        state_ == CubeState::kRecovery) {
+      // Play a dull sound so we know the cube is unresponsive.
       serial::PlayDullSound();
     }
     return;
@@ -211,9 +213,7 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
     }
   }
   // Play the pressed sound.
-  if (hand_event.type == HandEventType::kPressed) {
-    serial::PlayPressedSound(num_walls_pressed);
-  }
+  serial::PlayPressedSound(num_walls_pressed);
 }
 
 void Cube::SetNormalMode() { SetState(CubeState::kAmbient); }
