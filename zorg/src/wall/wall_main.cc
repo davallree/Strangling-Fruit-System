@@ -27,6 +27,8 @@ constexpr uint8_t kHandPin = T0;
 constexpr char kTouchThresholdKey[] = "touch_threshold";
 constexpr uint16_t kDefaultTouchThreshold = 35;
 uint16_t touch_threshold = kDefaultTouchThreshold;
+float smoothed_touch_value = 0;
+float kDataSmoothingFactor = 0.95;
 bool hand_pressed = false;
 
 LEDController controller;
@@ -67,6 +69,7 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
     Serial.printf("Setting new touch threshold: %d\n", new_touch_threshold);
     prefs.putUShort(kTouchThresholdKey, new_touch_threshold);
     touch_threshold = new_touch_threshold;
+    smoothed_touch_value = new_touch_threshold;
   }
 }
 
@@ -151,15 +154,21 @@ uint64_t last_debounce_time_millis = 0;
 bool last_hand_pressed_state = false;
 
 void loop() {
-  EVERY_N_SECONDS(1) {
-    Serial.printf("Current pattern: %d\n", controller.current_pattern_id());
-  }
-  animate();
-
   // Read the touch value
   uint16_t touch_value = touchRead(kHandPin);
 
-  bool current_hand_pressed_state = touch_value < touch_threshold;
+  EVERY_N_SECONDS(1) {
+    Serial.printf("Current pattern: %d, raw touch: %u, smoothed_value: %.2f, threshold: %u\n", 
+              controller.current_pattern_id(), 
+              touch_value, 
+              smoothed_touch_value, 
+              touch_threshold);
+
+  }
+  animate();
+
+  // bool current_hand_pressed_state = touch_value < static_cast<uint16_t>(touch_threshold * 0.9);
+  bool current_hand_pressed_state = touch_value < static_cast<uint16_t>(smoothed_touch_value * 0.85);
 
   if (current_hand_pressed_state != last_hand_pressed_state) {
     last_debounce_time_millis = millis();
@@ -177,5 +186,13 @@ void loop() {
       }
     }
   }
+
+  // If we are not pressed, smooth the touch value.
+  // We're effectively keeping a running, ever moving averge/baseline
+  // touch threshold. (The touch_threshold variable is no longer used here)
+  if (!current_hand_pressed_state) {
+    smoothed_touch_value = touch_value * (1 - kDataSmoothingFactor) + smoothed_touch_value * kDataSmoothingFactor;
+  }
+
   last_hand_pressed_state = current_hand_pressed_state;
 }
