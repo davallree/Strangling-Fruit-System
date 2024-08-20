@@ -50,6 +50,7 @@ class LEDBuffer {
 class Pattern {
  public:
   virtual void Update(LEDBuffer& buffer, uint8_t speed) = 0;
+  virtual void Reset() {};
 };
 
 // All LEDs off.
@@ -193,25 +194,40 @@ class GlitchPattern : public Pattern {
 class ClimaxPattern : public Pattern {
  public:
   void Update(LEDBuffer& buffer, uint8_t speed) override {
-    uint8_t rotation = beat8(speed);
-    uint8_t wave_phase = beatsin8(speed, 0, 255);
+    rand16seed = rand_seed_;
+    uint32_t current_time = millis();
+    uint32_t elapsed_time = current_time - start_time_;
+
+    // Calculate the appropriate fill_progress_ based on the elapsed time
+    if (elapsed_time < duration_) {
+      fill_progress_ = (255 * elapsed_time) / duration_;
+    } else {
+      fill_progress_ = 255;
+    }
 
     for (LED& led : buffer.leds()) {
-      uint8_t angle_offset = led.angle() + rotation;
-      uint8_t distance_factor = sin8(led.radius() + wave_phase);
-
-      // Choose between two colors based on distance_factor
-      if (distance_factor > 128) {
-        led.color().setHSV(160, 255, distance_factor);  // Deep blue
+      // Randomly decide if this LED should start brightening
+      if (random8() < fill_progress_) {
+        led.color() += CHSV(10, 10, 1);
       } else {
-        led.color().setHSV(0, 0, distance_factor);  // White
+        // Keep the LED off (black) until it's chosen to brighten
+        led.color().setHSV(0, 0, 0);
       }
-
-      // Add a motion effect by adjusting brightness based on angle
-      uint8_t brightness = scale8(cos8(angle_offset), distance_factor);
-      led.color().nscale8(brightness);
     }
   }
+
+  void Reset() override {
+    rand_seed_ = millis();
+    fill_progress_ = 0;
+    start_time_ = millis();  // Reset the start time
+  }
+
+ private:
+  uint16_t rand_seed_ = 0;
+  uint8_t fill_progress_ = 0;
+  uint32_t start_time_ = 0;
+  uint32_t duration_ = 20'000;  // Default duration (in milliseconds)
+  uint8_t scale_ = 2;
 };
 
 class RecoveryPattern : public Pattern {
@@ -277,7 +293,7 @@ class LEDController {
   // TODO: create a struct for that crap.
   PatternId previous_pattern_id_ = PatternId::kNone;
   uint8_t previous_pattern_speed_ = 60;
-  PatternId current_pattern_id_ = PatternId::kRecovery;
+  PatternId current_pattern_id_ = PatternId::kClimax;
   uint8_t current_pattern_speed_ = 60;
 };
 

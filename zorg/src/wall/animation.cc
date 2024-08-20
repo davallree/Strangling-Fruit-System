@@ -51,6 +51,7 @@ void LEDController::SetCurrentPattern(PatternId pattern_id,
     current_pattern_speed_ = pattern_speed;
     transition_start_millis_ = millis();
     transition_duration_millis_ = transition_duration_millis;
+    patterns_[current_pattern_id_]->Reset();
   }
 }
 
@@ -91,52 +92,3 @@ void LEDController::Update() {
            led_buffer_.num_leds(), 255 - blend);
   }
 }
-
-// void LEDController::TouchedPattern(LEDBuffer& buffer) {
-//   uint8_t wave_phase = beat8(60);
-//   uint8_t pulse = beatsin8(100, 0, 150);
-
-//   for (LED& led : buffer.leds()) {
-//     uint8_t brightness = sin8(mul8(255 - led.radius() - wave_phase, 2));
-//     led.color()
-//         .setRGB(128, 0, 128)
-//         .fadeToBlackBy(255 - brightness)
-//         .fadeToBlackBy(pulse);
-//   }
-// }
-
-// void LEDController::Circles(LEDBuffer& buffer) {
-//   uint8_t scale = 1;
-//   uint8_t x_translation = 0;
-//   uint8_t y_translation = 0;
-//   uint8_t warp = beat8(60);
-
-//   for (LED& led : buffer.leds()) {
-//     uint8_t brightness = sin8(sin8(scale * led.x() + x_translation) +
-//                               sin8(scale * led.y() + y_translation) + warp);
-//     led.color().setHSV(212, 255, brightness);
-//   }
-// }
-
-// void LEDController::Squiggles(LEDBuffer& buffer) {
-//   uint8_t scale = 1;
-//   uint8_t x_translation = 0;
-//   uint8_t y_translation = 0;
-//   uint8_t warp = beat8(60);
-
-//   for (LED& led : buffer.leds()) {
-//     uint8_t brightness = sin8(sin8(scale * led.x() + x_translation) +
-//                               sin8(scale * led.y() + y_translation) +
-//                               sin8(led.x() + led.y()) + warp);
-//     led.color().setHSV(212, 255, brightness);
-//   }
-// }
-
-// void LEDController::ClimaxPattern(LEDBuffer& buffer) {
-//   uint8_t hue_offset = beat8(60);
-//   uint8_t offset = beat8(200);
-//   for (LED& led : buffer.leds()) {
-//     led.color().setHSV(led.radius() + offset, 255,
-//                        sin8(2 * led.radius() - offset));
-//   }
-// }
