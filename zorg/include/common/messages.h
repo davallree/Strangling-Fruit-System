@@ -33,7 +33,7 @@ enum class HandEventType : uint8_t {
   // Sent when the hand has been pressed.
   kPressed,
   // Sent when the hand was released.
-  kReleased
+  kReleased,
   // Sent as a status event.
   kStatus
 };

@@ -70,7 +70,7 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
   }
 }
 
-void SendHandEvent(const HandEvent &event, uint16_t touch_value) {
+void SendHandEvent(const HandEvent &event) {
   // Skip sending if we are not paired with the master yet.
   if (master_address == EmptyMacAddress()) {
     Serial.println("Can't send event, no master paired.");
@@ -87,7 +87,7 @@ void SendHandEvent(const HandEvent &event, uint16_t touch_value) {
   ArduinoJson::JsonDocument doc;
   doc[kMethod] = kSetHandStateMethod;
   doc[kParams][kTouchThresholdParam] = touch_threshold;
-  doc[kParams][kTouchValueParam] = touch_value;
+  doc[kParams][kTouchValueParam] = event.value;
   if (event.type == HandEventType::kPressed) {
     doc[kParams][kHandStateParam] = kPressed;
   } else {
