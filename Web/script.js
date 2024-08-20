@@ -157,7 +157,7 @@ class CubeApp {
     if (this.currentSound) {
       this.currentSound.pause();
     }
-    console.log('playing sound: ', soundName);
+    console.log('playing sound: ', soundName, soundParams);
     switch (soundName) {
       case 'ambient':
         this.currentSound = this.ambientSound;

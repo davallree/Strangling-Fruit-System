@@ -40,7 +40,7 @@ float WallPressedCount(const std::vector<Wall>& walls) {
 uint64_t LatestInteractionTime(const std::vector<Wall>& walls) {
   uint64_t latest_interaction_time_ = 0;
   for (const Wall& wall : walls) {
-    if (wall.last_interaction_time_millis() > latest_interaction_time_)
+    if (wall.pressed() && wall.last_interaction_time_millis() > latest_interaction_time_)
       latest_interaction_time_ = wall.last_interaction_time_millis();
   }
   return latest_interaction_time_;

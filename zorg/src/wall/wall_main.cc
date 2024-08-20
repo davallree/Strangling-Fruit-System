@@ -23,13 +23,16 @@
 MacAddress master_address;
 
 // Whether the hand is currently pressed or not.
-constexpr uint8_t kHandPin = T0;
+constexpr uint8_t kHandPin = T6;
 constexpr char kTouchThresholdKey[] = "touch_threshold";
 constexpr uint16_t kDefaultTouchThreshold = 35;
 uint16_t touch_threshold = kDefaultTouchThreshold;
 float smoothed_touch_value = 0;
 float kDataSmoothingFactor = 0.95;
 bool hand_pressed = false;
+uint16_t touch_p1 = 0;
+uint16_t touch_p2 = 0;
+uint16_t touch_p3 = 0;
 
 LEDController controller;
 
@@ -154,21 +157,45 @@ uint64_t last_debounce_time_millis = 0;
 bool last_hand_pressed_state = false;
 
 void loop() {
+  animate();
+
   // Read the touch value
   uint16_t touch_value = touchRead(kHandPin);
+  float prev_threshold = smoothed_touch_value;
+
+  touch_p1 = touch_value; // Latest point in the history
+  
+  // Glitch detector
+  if (abs(touch_p3 - touch_p1) < 5) {   // The latest point and the two points back are pretty close 
+    if (abs(touch_p2 - touch_p3) > 3) { // The point in the middle is too different from the adjacent points -- ignore
+      touch_p2 = touch_p3;
+    }
+  }
+
+  // If we are not pressed, smooth the touch value.
+  // We're effectively keeping a running, ever moving averge/baseline
+  // touch threshold. (The touch_threshold variable is no longer used here)
+  if (!last_hand_pressed_state) {
+    // smoothed_touch_value = touch_value * (1 - kDataSmoothingFactor) + smoothed_touch_value * kDataSmoothingFactor;
+    smoothed_touch_value = touch_p3 * (1 - kDataSmoothingFactor) + smoothed_touch_value * kDataSmoothingFactor;
+
+    // Shift the history
+    touch_p3 = touch_p2;
+    touch_p2 = touch_p1;
+  }
+
+  // bool current_hand_pressed_state = touch_value < static_cast<uint16_t>(touch_threshold * 0.9);
+  bool current_hand_pressed_state = touch_value < prev_threshold * 0.9;
 
   EVERY_N_SECONDS(1) {
-    Serial.printf("Current pattern: %d, raw touch: %u, smoothed_value: %.2f, threshold: %u\n", 
+    Serial.printf("Current pattern: %d, raw touch: %u, smoothed_value: %.2f, threshold: %.2f, isTouched: %d\n", 
               controller.current_pattern_id(), 
               touch_value, 
               smoothed_touch_value, 
-              touch_threshold);
+              prev_threshold * 0.95,
+              current_hand_pressed_state);
 
   }
-  animate();
-
-  // bool current_hand_pressed_state = touch_value < static_cast<uint16_t>(touch_threshold * 0.9);
-  bool current_hand_pressed_state = touch_value < static_cast<uint16_t>(smoothed_touch_value * 0.85);
 
   if (current_hand_pressed_state != last_hand_pressed_state) {
     last_debounce_time_millis = millis();
@@ -185,13 +212,6 @@ void loop() {
         SendHandEvent(HandEvent{.type = HandEventType::kReleased});
       }
     }
-  }
-
-  // If we are not pressed, smooth the touch value.
-  // We're effectively keeping a running, ever moving averge/baseline
-  // touch threshold. (The touch_threshold variable is no longer used here)
-  if (!current_hand_pressed_state) {
-    smoothed_touch_value = touch_value * (1 - kDataSmoothingFactor) + smoothed_touch_value * kDataSmoothingFactor;
   }
 
   last_hand_pressed_state = current_hand_pressed_state;
