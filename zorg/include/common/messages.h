@@ -53,11 +53,10 @@ enum PatternId : uint8_t {
 
   kAwaitTouch,
   kGlitch,
-
-  // Climax stuff.
   kClimax,
-
   kRecovery,
+  kManBurn,
+  kTempleBurn,
   kNumPatternIds,
 };
 

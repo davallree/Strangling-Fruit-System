@@ -261,9 +261,18 @@ void Cube::SetState(CubeState state) {
       serial::PlayAmbientSound();
       break;
     }
-    case CubeState::kManBurn:
+    case CubeState::kManBurn: {
+      for (Wall& wall : walls_) {
+        wall.SetPattern(PatternId::kManBurn, 60, 1000);
+      }
+      serial::PlayAmbientSound();
+      break;
+    }
     case CubeState::kTempleBurn: {
-      // TODO: implement.
+      for (Wall& wall : walls_) {
+        wall.SetPattern(PatternId::kTempleBurn, 60, 1000);
+      }
+      serial::PlayAmbientSound();
       break;
     }
   }
