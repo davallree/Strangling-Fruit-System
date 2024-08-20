@@ -1,7 +1,17 @@
 import "../Tone.js";
 
 export class PressedSound {
-  speedMultiplier = 0;
+  _speedMultiplier = 0;
+  _increasing = false;
+
+  set speedMultiplier(numPressed) {
+    this._increasing = numPressed > this._speedMultiplier;
+    this._speedMultiplier = numPressed;
+  }
+
+  get speedMultiplier() {
+    return this._speedMultiplier;
+  }
 
   constructor() {
     this.compressor = new Tone.Compressor().toDestination();
@@ -52,7 +62,10 @@ export class PressedSound {
     Tone.Transport.start();
     Tone.Transport.bpm.value = 60;
     this.bassSynth.triggerAttackRelease(this.notesForMultiplier[this.speedMultiplier][0], "8n");
-    this.pressedSynth.triggerAttackRelease(this.notesForMultiplier[this.speedMultiplier][1], "8n");
+
+    if (this._increasing) {
+      this.pressedSynth.triggerAttackRelease(this.notesForMultiplier[this.speedMultiplier][1], "8n");
+    }
 
     // Start the bass LFO.
     this.bassOscillator.start();
