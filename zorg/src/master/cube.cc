@@ -36,11 +36,22 @@ float WallPressedCount(const std::vector<Wall>& walls) {
 }
 
 // For all the currently pressed hands, returns the time the last one to be
-// pressed. If no hands are currently pressed, returns nullopt;
-uint64_t LatestInteractionTime(const std::vector<Wall>& walls) {
+// pressed.
+uint64_t LatestPressedTime(const std::vector<Wall>& walls) {
   uint64_t latest_interaction_time_ = 0;
   for (const Wall& wall : walls) {
     if (wall.pressed() && wall.last_interaction_time_millis() > latest_interaction_time_)
+      latest_interaction_time_ = wall.last_interaction_time_millis();
+  }
+  return latest_interaction_time_;
+}
+
+// For all the hands, returns the time the last one to be
+// pressed or released.
+uint64_t LatestInteractionTime(const std::vector<Wall>& walls) {
+  uint64_t latest_interaction_time_ = 0;
+  for (const Wall& wall : walls) {
+    if (wall.last_interaction_time_millis() > latest_interaction_time_)
       latest_interaction_time_ = wall.last_interaction_time_millis();
   }
   return latest_interaction_time_;
