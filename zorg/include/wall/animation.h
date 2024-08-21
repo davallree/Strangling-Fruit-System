@@ -248,15 +248,12 @@ class RecoveryPattern : public Pattern {
 class ManBurnPattern : public Pattern {
  public:
   void Update(LEDBuffer& buffer, uint8_t speed) override {
-    uint8_t wave_phase = beat8(speed);
-
+    uint8_t rotation = beat8(speed);
+    uint8_t ripple = beat8(speed);
     for (LED& led : buffer.leds()) {
-      // Introduce a second wave with a slight phase shift for a more complex
-      // wave pattern
       uint8_t brightness =
-          qadd8(sin8(scale_ * (led.radius() + wave_phase)),
-                sin8(scale_ * (led.radius() + wave_phase / 2)));
-
+          sin8(zoom_ * led.radius() +
+               shape_ * sin8(petals_ * led.angle() + rotation) + ripple);
       // Change the hue slightly based on the distance for a more psychedelic
       // effect
       uint8_t hue = 212 + (led.radius() / 2);
@@ -266,12 +263,24 @@ class ManBurnPattern : public Pattern {
   }
 
  private:
-  uint8_t scale_ = 2;
+  uint8_t zoom_ = 1;
+  uint8_t shape_ = 1;
+  uint8_t petals_ = 3;
+  uint8_t scale_ = 1;
 };
 
 class TempleBurnPattern : public Pattern {
  public:
-  void Update(LEDBuffer& buffer, uint8_t speed) override {}
+  void Update(LEDBuffer& buffer, uint8_t speed) override {
+    uint8_t offset = beat8(speed);
+    for (LED& led : buffer.leds()) {
+      uint8_t brightness = sin8(scale8(255 - led.x(), led.y()) +
+                                scale8(255 - led.y(), led.x()) + offset);
+      // brightness = qadd8(brightness, sin8(scale8(led.x(), led.y()) +
+      // offset));
+      led.color().setHSV(0, 0, brightness);
+    }
+  }
 };
 
 // Controls the LED matrix.
@@ -322,7 +331,7 @@ class LEDController {
   // TODO: create a struct for that crap.
   PatternId previous_pattern_id_ = PatternId::kNone;
   uint8_t previous_pattern_speed_ = 60;
-  PatternId current_pattern_id_ = PatternId::kManBurn;
+  PatternId current_pattern_id_ = PatternId::kTempleBurn;
   uint8_t current_pattern_speed_ = 60;
 };
 
