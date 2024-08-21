@@ -276,8 +276,6 @@ class TempleBurnPattern : public Pattern {
     for (LED& led : buffer.leds()) {
       uint8_t brightness = sin8(scale8(255 - led.x(), led.y()) +
                                 scale8(255 - led.y(), led.x()) + offset);
-      // brightness = qadd8(brightness, sin8(scale8(led.x(), led.y()) +
-      // offset));
       led.color().setHSV(0, 0, brightness);
     }
   }
