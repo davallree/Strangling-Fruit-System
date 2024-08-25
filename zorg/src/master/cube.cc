@@ -40,7 +40,8 @@ float WallPressedCount(const std::vector<Wall>& walls) {
 uint64_t LatestPressedTime(const std::vector<Wall>& walls) {
   uint64_t latest_interaction_time_ = 0;
   for (const Wall& wall : walls) {
-    if (wall.pressed() && wall.last_interaction_time_millis() > latest_interaction_time_)
+    if (wall.pressed() &&
+        wall.last_interaction_time_millis() > latest_interaction_time_)
       latest_interaction_time_ = wall.last_interaction_time_millis();
   }
   return latest_interaction_time_;
@@ -230,6 +231,12 @@ void Cube::OnHandEvent(const MacAddress& mac_address,
 void Cube::SetNormalMode() { SetState(CubeState::kAmbient); }
 void Cube::SetManBurnMode() { SetState(CubeState::kManBurn); }
 void Cube::SetTempleBurnMode() { SetState(CubeState::kTempleBurn); }
+
+void Cube::SetLedsEnabled(bool enabled) {
+  for (Wall& wall : walls_) {
+    wall.SendSetLedsEnabledCommand(enabled);
+  }
+}
 
 void Cube::SetState(CubeState state) {
   if (state_ == state) return;

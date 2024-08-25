@@ -117,6 +117,8 @@ void loop() {
       } else if (mode == kTempleBurnMode) {
         cube.SetTempleBurnMode();
       }
+    } else if (method == kSetLedsEnabledMethod) {
+      cube.SetLedsEnabled(params[kEnabledParam]);
     }
   }
   cube.Update();

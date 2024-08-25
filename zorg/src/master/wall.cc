@@ -42,6 +42,13 @@ void Wall::SendSetTouchThresholdCommand(uint16_t threshold) const {
   Send(doc);
 }
 
+void Wall::SendSetLedsEnabledCommand(bool enabled) const {
+  ArduinoJson::JsonDocument doc;
+  doc[kMethod] = kSetLedsEnabledMethod;
+  doc[kParams][kEnabledParam] = enabled;
+  Send(doc);
+}
+
 void Wall::OnHandPressed() {
   pressed_ = true;
   last_interaction_time_millis_ = millis();
