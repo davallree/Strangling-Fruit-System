@@ -48,6 +48,10 @@ class CubeApp {
     this.connectButton.addEventListener('pointerdown', this.connect);
     this.restartMasterButton.addEventListener('pointerdown', this.sendRestartMasterMessage);
 
+    document.getElementById('enable-leds')
+      .addEventListener('pointerdown', () => this.sendSetLedsEnabledMessage(true));
+    document.getElementById('disable-leds')
+      .addEventListener('pointerdown', () => this.sendSetLedsEnabledMessage(false));
     document.getElementById('set-normal')
       .addEventListener('pointerdown', () => this.sendSetCubeModeMessage('normal'));
     document.getElementById('set-man-burn')
@@ -201,7 +205,11 @@ class CubeApp {
   }
 
   sendSetCubeModeMessage = async (cubeMode) => {
-    await this.serialHandler.send('setCubeMode', { 'cubeMode': cubeMode })
+    await this.serialHandler.send('setCubeMode', { 'cubeMode': cubeMode });
+  }
+
+  sendSetLedsEnabledMessage = async (enabled) => {
+    await this.serialHandler.send('setLedsEnabled', { 'enabled': enabled });
   }
 
   updateStatus = (params) => {
