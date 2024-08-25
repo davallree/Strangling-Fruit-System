@@ -16,6 +16,8 @@ class CubeApp {
 
   restartMasterButton = document.getElementById('restart-master-button');
 
+  ledsAutoUpdateToggle = document.getElementById('leds-auto-update');
+
   messagesConsole = document.getElementById('messages');
   currentSound = null;
 
@@ -123,9 +125,36 @@ class CubeApp {
       await this.serialHandler.connect();
       console.log('Connected to device');
       this.setMasterConnected(true);
+      // Do time check now and  every minute.
+      this.checkTime();
+      setInterval(this.checkTime, 60000);
       await this.serialHandler.read();
     } catch (error) {
       console.error('Failed to connect to device:', error);
+    }
+  }
+
+  ledsEnabled = null;
+  checkTime = () => {
+    if (!this.ledsAutoUpdateToggle.checked) return;
+    const now = new Date();
+    const hours = now.getHours();
+
+    if (hours >= 6 && hours < 18) {
+      // Daytime, switch them off unless we are sure they are already off.
+      if (this.ledsEnabled !== false) {
+        this.sendSetLedsEnabledMessage(false);
+        this.ledsEnabled = false;
+        console.log("Disabling LEDs.");
+      }
+    }
+    else {
+      // Night time, switch them on unless we are sure they are already on.
+      if (this.ledsEnabled !== true) {
+        this.sendSetLedsEnabledMessage(true);
+        this.ledsEnabled = true;
+        console.log("Enabling LEDs.");
+      }
     }
   }
 
@@ -210,6 +239,7 @@ class CubeApp {
 
   sendSetLedsEnabledMessage = async (enabled) => {
     await this.serialHandler.send('setLedsEnabled', { 'enabled': enabled });
+    this.ledsEnabled = enabled;
   }
 
   updateStatus = (params) => {
