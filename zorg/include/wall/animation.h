@@ -341,7 +341,7 @@ class LEDController {
   // TODO: create a struct for that crap.
   PatternId previous_pattern_id_ = PatternId::kNone;
   uint8_t previous_pattern_speed_ = 60;
-  PatternId current_pattern_id_ = PatternId::kTempleBurn;
+  PatternId current_pattern_id_ = PatternId::kRecovery;
   uint8_t current_pattern_speed_ = 60;
 };
 
