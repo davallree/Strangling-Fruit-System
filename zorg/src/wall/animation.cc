@@ -59,6 +59,9 @@ void LEDController::SetCurrentPattern(PatternId pattern_id,
 
 void LEDController::Update() {
   std::lock_guard<std::mutex> lock(mu_);
+  // Return early if the LEDs should be off.
+  if (!enabled_) return;
+
   // Call the current pattern.
   Pattern* current_pattern = patterns_[current_pattern_id_].get();
   if (current_pattern == nullptr) {

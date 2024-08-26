@@ -75,6 +75,14 @@ void OnDataReceived(const uint8_t *mac_addr, const uint8_t *data,
     prefs.putUShort(kTouchThresholdKey, new_touch_threshold);
     touch_threshold = new_touch_threshold;
     smoothed_touch_value = new_touch_threshold;
+  } else if (doc[kMethod] == kSetLedsEnabledMethod) {
+    bool enabled = doc[kParams][kEnabledParam];
+    if (enabled) {
+      Serial.println("Enabling LEDs.");
+    } else {
+      Serial.println("Disabling LEDs.");
+    }
+    controller.set_enabled(enabled);
   }
 }
 
@@ -175,11 +183,14 @@ void loop() {
   uint16_t touch_value = touchRead(kHandPin);
   float prev_threshold = smoothed_touch_value;
 
-  touch_p1 = touch_value; // Latest point in the history
-  
+  touch_p1 = touch_value;  // Latest point in the history
+
   // Glitch detector
-  if (abs(touch_p3 - touch_p1) < 5) {   // The latest point and the two points back are pretty close 
-    if (abs(touch_p2 - touch_p3) > 3) { // The point in the middle is too different from the adjacent points -- ignore
+  if (abs(touch_p3 - touch_p1) <
+      5) {  // The latest point and the two points back are pretty close
+    if (abs(touch_p2 - touch_p3) >
+        3) {  // The point in the middle is too different from the adjacent
+              // points -- ignore
       touch_p2 = touch_p3;
     }
   }
@@ -191,8 +202,10 @@ void loop() {
   // We're effectively keeping a running, ever moving averge/baseline
   // touch threshold. (The touch_threshold variable is no longer used here)
   if (!current_hand_pressed_state && !last_hand_pressed_state) {
-    // smoothed_touch_value = touch_value * (1 - kDataSmoothingFactor) + smoothed_touch_value * kDataSmoothingFactor;
-    smoothed_touch_value = touch_p3 * (1 - kDataSmoothingFactor) + smoothed_touch_value * kDataSmoothingFactor;
+    // smoothed_touch_value = touch_value * (1 - kDataSmoothingFactor) + 
+    // smoothed_touch_value * kDataSmoothingFactor;
+    smoothed_touch_value = touch_p3 * (1 - kDataSmoothingFactor) + 
+                           smoothed_touch_value * kDataSmoothingFactor;
 
     // Shift the history
     touch_p3 = touch_p2;

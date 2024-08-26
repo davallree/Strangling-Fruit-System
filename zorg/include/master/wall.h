@@ -52,6 +52,8 @@ class Wall {
   void SendRestartCommand() const;
   void SendSetTouchThresholdCommand(uint16_t touch_threshold) const;
 
+  void SendSetLedsEnabledCommand(bool enabled) const;
+
  private:
   void Send(const ArduinoJson::JsonDocument& doc) const;
   DeliveryStatus last_delivery_status_;

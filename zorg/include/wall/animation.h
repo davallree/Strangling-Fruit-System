@@ -276,8 +276,6 @@ class TempleBurnPattern : public Pattern {
     for (LED& led : buffer.leds()) {
       uint8_t brightness = sin8(scale8(255 - led.x(), led.y()) +
                                 scale8(255 - led.y(), led.x()) + offset);
-      // brightness = qadd8(brightness, sin8(scale8(led.x(), led.y()) +
-      // offset));
       led.color().setHSV(0, 0, brightness);
     }
   }
@@ -309,11 +307,23 @@ class LEDController {
 
   PatternId current_pattern_id() const { return current_pattern_id_; }
 
+  void set_enabled(bool enabled) {
+    enabled_ = enabled;
+    // Set LED buffer to black if we want them to be off.
+    if (!enabled_) {
+      for (LED& led : led_buffer_.leds()) {
+        led.color() = CRGB::Black;
+      }
+    }
+  }
+
  private:
   void InitBuffers(int num_leds);
 
   // Protects members from concurrent access.
   std::mutex mu_;
+
+  bool enabled_ = true;
 
   std::vector<std::unique_ptr<Pattern>> patterns_;
 
@@ -331,7 +341,7 @@ class LEDController {
   // TODO: create a struct for that crap.
   PatternId previous_pattern_id_ = PatternId::kNone;
   uint8_t previous_pattern_speed_ = 60;
-  PatternId current_pattern_id_ = PatternId::kTempleBurn;
+  PatternId current_pattern_id_ = PatternId::kRecovery;
   uint8_t current_pattern_speed_ = 60;
 };
 

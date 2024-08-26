@@ -71,6 +71,8 @@ class Cube {
   void SetManBurnMode();
   void SetTempleBurnMode();
 
+  void SetLedsEnabled(bool enabled);
+
  private:
   void SetState(CubeState state);
 

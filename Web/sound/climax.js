@@ -108,12 +108,13 @@ export class ClimaxSound {
     Tone.Transport.scheduleOnce((time) => {
       const soundIndex = Math.floor(Math.random() * 27) + 1;
       this.players[soundIndex].start(time + Tone.Time("1m"));
-    }, `${riseTime}`);
+    }, `+${riseTime}`);
   }
 
   pause() {
     // Stop transport and remove all events.
     Tone.Transport.stop().cancel();
+    this.players.forEach((p) => p.stop());
     // Silence the synths and oscillators.
     this.pressedSynth.releaseAll();
     this.bassSynth.releaseAll();
