@@ -20,6 +20,7 @@ https://marketplace.visualstudio.com/items?itemName=platformio.platformio-ide
 $ cd zorg
 $ pio run -e main -t upload  # uploads the main program
 $ pio run -e wall -t upload  # uploads the wall program
+$ pio run -e wall-flipped -t upload  # uploads the flipped wall program
 ```
 
 If multiple boards are plugged in:
