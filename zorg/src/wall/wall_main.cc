@@ -27,12 +27,14 @@ constexpr uint8_t kHandPin = T6;
 constexpr char kTouchThresholdKey[] = "touch_threshold";
 constexpr uint16_t kDefaultTouchThreshold = 35;
 uint16_t touch_threshold = kDefaultTouchThreshold;
-float smoothed_touch_value = 0;
+float smoothed_touch_value = 50;
 float kDataSmoothingFactor = 0.95;
 bool hand_pressed = false;
 uint16_t touch_p1 = 0;
 uint16_t touch_p2 = 0;
 uint16_t touch_p3 = 0;
+uint16_t current_brightness = 50;
+uint16_t brightness_delta = 1;
 
 LEDController controller;
 
@@ -133,7 +135,7 @@ void setup() {
                             controller.led_data().size())
       .setCorrection(TypicalLEDStrip);
 #endif
-  FastLED.setBrightness(10);
+  FastLED.setBrightness(current_brightness);
   FastLED.setMaxRefreshRate(60, true);
 
   prefs.begin("wall_prefs");
@@ -149,6 +151,16 @@ void setup() {
 
 void animate() {
   controller.Update();
+
+  if (current_brightness == 255) {
+    brightness_delta = -1;
+  } else if (current_brightness == 10) {
+    brightness_delta = 1;
+  }
+
+  current_brightness = current_brightness + brightness_delta;
+
+  FastLED.setBrightness(current_brightness);
   FastLED.show();
 }
 
@@ -172,10 +184,13 @@ void loop() {
     }
   }
 
+  // bool current_hand_pressed_state = touch_value < static_cast<uint16_t>(touch_threshold * 0.9);
+  bool current_hand_pressed_state = abs(touch_value - prev_threshold) > 20; // just picking a random delta
+
   // If we are not pressed, smooth the touch value.
   // We're effectively keeping a running, ever moving averge/baseline
   // touch threshold. (The touch_threshold variable is no longer used here)
-  if (!last_hand_pressed_state) {
+  if (!current_hand_pressed_state && !last_hand_pressed_state) {
     // smoothed_touch_value = touch_value * (1 - kDataSmoothingFactor) + smoothed_touch_value * kDataSmoothingFactor;
     smoothed_touch_value = touch_p3 * (1 - kDataSmoothingFactor) + smoothed_touch_value * kDataSmoothingFactor;
 
@@ -184,15 +199,12 @@ void loop() {
     touch_p2 = touch_p1;
   }
 
-  // bool current_hand_pressed_state = touch_value < static_cast<uint16_t>(touch_threshold * 0.9);
-  bool current_hand_pressed_state = touch_value < prev_threshold * 0.9;
-
   EVERY_N_SECONDS(1) {
     Serial.printf("Current pattern: %d, raw touch: %u, smoothed_value: %.2f, threshold: %.2f, isTouched: %d\n", 
               controller.current_pattern_id(), 
               touch_value, 
               smoothed_touch_value, 
-              prev_threshold * 0.95,
+              abs(touch_value - prev_threshold),
               current_hand_pressed_state);
 
   }
